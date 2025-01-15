@@ -52,20 +52,6 @@ public:
 		return *this;
 	}
 
-	static float Sqrt(const float num) {
-		static const float epsilon = 1e-6;
-		float temp = 0;
-		float sr = num / 2;
-
-		do {
-			temp = sr;
-			sr = (temp + (num / temp)) / 2;
-		} while (std::abs(temp - sr) > epsilon);
-
-		return sr;
-	}
-
-
 	float DistSquared(const vec2& end)const {
 		const float A = (end.x - x) * 2;
 		const float B = (end.y - y) * 2;
@@ -90,5 +76,43 @@ public:
 		if (len == 0)return vec2(0, 0);
 		return { x / len, y / len };
 	}
+
+};
+
+
+class line {
+	vec2 start = { 0,0 };
+	vec2 end = { 0,0 };
+public:
+	line(const vec2& s, const vec2& e) :start(s), end(e) {}
+
+	static float Sqrt(const float num) {//idk, apperantly standart lib one uses hardware to optimize or some shit
+		static const float epsilon = 1e-6;
+		float temp = 0;
+		float sr = num / 2;
+
+		do {
+			temp = sr;
+			sr = (temp + (num / temp)) / 2;
+		} while (std::abs(temp - sr) > epsilon);
+
+		return sr;
+	}
+
+	float Slope()const {
+		float ex = end.x - start.x;
+		float ey = end.y - start.y;
+		return ey / ex;
+	}
+	float Angle(const line& other) {
+		float this_slope = Slope();
+		float other_slope = other.Slope();
+
+		float angle = std::abs((other_slope - this_slope) / (1 + this_slope * other_slope));
+
+
+	}
+
+	bool Intersect();
 
 };
