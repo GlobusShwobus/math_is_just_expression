@@ -1,6 +1,9 @@
 #pragma once
 #include <cmath>
 
+#define PI 3.14159265
+
+
 class vec2 {
 public:
 
@@ -102,17 +105,26 @@ public:
 	float Slope()const {
 		float ex = end.x - start.x;
 		float ey = end.y - start.y;
+		
+		if (ex == 0) {
+			return 0.f;
+		}
+
 		return ey / ex;
 	}
-	float Angle(const line& other) {
+	float Angle(const line& other)const {
 		float this_slope = Slope();
 		float other_slope = other.Slope();
 
 		float angle = std::abs((other_slope - this_slope) / (1 + this_slope * other_slope));
 
+		float ret = atan(angle);
 
+		return (ret * 180) / PI;
 	}
 
-	bool Intersect();
+	bool Intersect(const line& other)const {
+
+	}
 
 };
