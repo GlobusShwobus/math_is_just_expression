@@ -116,6 +116,7 @@ namespace line {
 
 		return (ret * 180) / PI;
 	}
+
 	vec2 Intersection(const line& line1, const line& line2) {
 
 		static constexpr float epsilon = 1e-6f;
@@ -139,12 +140,6 @@ namespace line {
 
 		return { x,y };
 	}
-
-
-
-
-
-
 
 	static float Sqrt(const float num) {//idk, apperantly standart lib one uses hardware to optimize or some shit
 		static const float epsilon = 1e-6;
