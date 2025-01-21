@@ -3,60 +3,106 @@
 
 #include <fstream>
 
+/*
+load- load a file for reading
+save- make files out of data
+add- entry with a name and a number
+quit- quit
+print- prints shit on the screen
+
+*/
 int main() {
 
-	/*
-	const int muhint = 69420123;
-	std::ofstream out("boi.dat", std::ios::binary);
-	out.write(reinterpret_cast<const char*>(&muhint), sizeof(muhint));
-	*/
-	
-	std::ifstream in("boi.dat", std::ios::binary);
-
-	int data = -1;
-
-	in.read(reinterpret_cast<char*>(&data), sizeof(data));
-
-	printf("%d \n",data);
-	
+	bool runs = true;
+	constexpr int select_options = 5;
 
 
-	/*
-	std::fstream in("derp.txt");
+	std::vector<std::string> muh_database;
 
-	if (!in) {
-		str::print("\nbig pantsu hacker boi");
-		return -1;
+
+	while (runs) {
+
+		str::print("\nDa BIG POOPOO QUEST:\n\n[1] load file\n[2] save current\n[3] add entry\n[4] quit\n[5] print\n\nInput >> ");
+
+		const int select = str::ISTR::InputRange(select_options);
+
+		switch (select) {
+		case 1:
+		{
+			printf("\nenter filename: ");
+			std::string filename = str::ISTR::InputStr();
+			filename += ".txt";
+			std::ifstream in(filename, std::ios::in);
+			printf("\n");
+			if (in.good()) {
+				for (char c = in.get(); in.good(); c = in.get()) {
+					_putch(c);
+				}
+
+				const char poop = _kbhit();
+			}
+			else {
+				printf("\nfile with given name not found");
+			}
+		}
+		break;
+		case 2:
+		{
+			printf("\nenter filename: ");
+			std::string filename = str::ISTR::InputStr();
+			filename += ".txt";
+			std::ofstream out(filename, std::ios::app);
+
+			if (out.good()) {
+				for (auto& each : muh_database) {
+					out << each;
+					out << "\n";
+				}
+			}
+
+		}
+		break;
+		case 3:
+		{
+			printf("\nenter name: ");
+			std::string entry = str::ISTR::InputStr();
+			printf("\nenter size but be reasonable: ");
+			const int sizerino = str::ISTR::InputNum();
+
+			entry += "| ";
+			for (int i = 0; i < sizerino; i++) {
+				entry += "=";
+			}
+
+			muh_database.push_back(entry);
+
+		}
+		break;
+		case 4:
+		{
+			printf("\n\nBuh bye!");
+			const char poop = _kbhit();
+			runs = false;
+		}
+			break;
+		case 5:
+		{
+			printf("\n\nWOW such data!\n\n");
+			for (auto& each : muh_database) {
+				printf("%s\n",each.c_str());
+			}
+		
+			const char poop = _kbhit();
+		}
+		break;
+		default:
+			printf("%s %d", "Something is fucked up with nums when", select);
+			break;
+		}
+
 	}
 
-	in.seekg(0, std::ios_base::end);
-	const int len = in.tellg(); 
-
-	str::print("\nFile Size: ");
-	printf("%d\n ", len);
-
-	in.seekg(0);
-
-	for (char c = in.get(); in.good(); c = in.get()) {
-		_putch(c);
-	}
-
-	if (in.bad()) {
-		str::print("\nbigus dickus\n");
-	}
-	else if (in.fail()) {
-		str::print("\ni always fail. failing is good\n");
-	}
-
-	std::ofstream out("out.txt");
-
-	for (char c = _getch(); c != 13; c = _getch()) {
-		out.put(c);
-		_putch(c);
-	}
-	*/
 
 
-	while (!_kbhit());
 	return 0;
 }

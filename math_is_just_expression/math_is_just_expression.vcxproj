@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="strings2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="strings2.h" />
