@@ -13,6 +13,7 @@ int main() {
         window.clear(sf::Color::Black);
         window.display();
     }
+    //poopa
 
     return 0;
 }
