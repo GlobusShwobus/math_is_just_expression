@@ -143,6 +143,7 @@
     <ClCompile Include="strings2.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Entity.h" />
     <ClInclude Include="strings2.h" />
     <ClInclude Include="vec2.h" />
   </ItemGroup>
