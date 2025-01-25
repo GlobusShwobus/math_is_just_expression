@@ -59,10 +59,6 @@ enum class EntityType {
 	player, enemy, NULLTYPE
 };
 
-//break up entity into 3 types; NO POLYMORPHISM
-//enviourment basic type
-//bullet types(spells, bombs, skills whatever teh fuck)
-//NPC  types
 class Entity {
 
 	bool activeStatus = false;
