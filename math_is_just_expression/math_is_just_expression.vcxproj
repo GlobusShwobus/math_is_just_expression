@@ -144,6 +144,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="strings2.h" />
     <ClInclude Include="vec2.h" />
   </ItemGroup>

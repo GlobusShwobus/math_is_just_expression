@@ -14,13 +14,12 @@ public:
 
 class CShape {
 public:
-	sf::CircleShape circle;
-	CShape(float radius, int vertices, const sf::Color& fill, const sf::Color& outline, float thickness)
-		:circle(radius, vertices) {
-		circle.setFillColor(fill);
-		circle.setOutlineColor(outline);
-		circle.setOutlineThickness(thickness);
-		circle.setOrigin(radius, radius);
+	sf::RectangleShape rect;
+	CShape(const sf::Vector2f& size, const sf::Color& fill, const sf::Color& outline, float thickness)
+		:rect(size) {
+		rect.setFillColor(fill);
+		rect.setOutlineColor(outline);
+		rect.setOutlineThickness(thickness);
 	}
 };
 
@@ -60,24 +59,27 @@ enum class EntityType {
 	player, enemy, NULLTYPE
 };
 
+//break up entity into 3 types; NO POLYMORPHISM
+//enviourment basic type
+//bullet types(spells, bombs, skills whatever teh fuck)
+//NPC  types
 class Entity {
-
-	friend class EntityManager;
 
 	bool activeStatus = false;
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
 
-	Entity(const size_t id, const EntityType t);
-
 public:
 
-	CTransform transform;
-	CShape shape;
-	CCollision colision;
-	CScore score;
-	CLifespan lifepoints;
-	CInput input;
+	Entity(const size_t id, const EntityType t);
+
+
+	CTransform    transform;
+	CShape        shape;
+	CCollision    colision;
+	CScore        score;
+	CLifespan     lifepoints;
+	CInput        input;
 
 	bool IsActive()const;
 	const EntityType Type()const;
@@ -89,12 +91,10 @@ public:
 
 class EntityManager {
 
-
 	std::unique_ptr<std::vector<Entity>> to_add;
+	std::unique_ptr<std::map<EntityType, std::vector<Entity>>> entities;
 
-	std::unique_ptr<std::map<EntityType, std::vector<Entity>>> entities;//ehh idk yet
 
 	size_t total_entities;
-
 
 };
