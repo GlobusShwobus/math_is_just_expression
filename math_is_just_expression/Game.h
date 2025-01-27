@@ -15,10 +15,18 @@ class Game {
 	EntityManager entities;
 	Player player;
 
+	nlohmann::json& config;
+
 public:
+
+	Game(nlohmann::json& CONFIG) :config(CONFIG), entities(CONFIG), player(CONFIG) {}
 
 	void Init() {
 		//read from teh config json, the window one and set up window size, name, framrate
+
+		window.create(sf::VideoMode(1280, 720), "TEST123");
+		window.setFramerateLimit(60);
+
 
 		//window.create(sf::Videomode(x,y),"name")
 		//window.setFramerateLimit(xyz)
@@ -36,7 +44,7 @@ public:
 			if (!paused) {
 				sEnemySpawner();
 				sMovement();
-				sCollision();
+				//sCollision();
 			}
 			sUserInput();
 			sRender();
@@ -62,6 +70,9 @@ public:
 
 		player.shape.rect.setPosition(player.transform.pos.x, player.transform.pos.y);
 
+		for (const auto& each : entities.GetEntities()) {
+			window.draw(each.shape.rect);
+		}
 
 		window.draw(player.shape.rect);
 		window.display();
@@ -100,10 +111,13 @@ public:
 			if (sfevent.type == sf::Event::MouseButtonPressed) {
 				if (sfevent.key.code == sf::Mouse::Left) {
 					player.input.shoot = true;
+					entities.testspawn(config, sf::Mouse::getPosition());
+					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
 				if (sfevent.key.code == sf::Mouse::Right) {
 					player.input.shield = true;
+					//also spawn bullet here
 					//handle spawning shield somewhere
 				}
 			}
@@ -128,21 +142,19 @@ public:
 			each.transform.pos += each.transform.vel;
 		}
 
-		static constexpr int temp_player_speed = 5;
-
 		player.transform.vel = { 0,0 };		//reset vel each frame
 
 		if (player.input.up) {
-			player.transform.vel.y -= temp_player_speed;
+			player.transform.vel.y -= player.transform.speed;
 		}
 		if (player.input.left) {
-			player.transform.vel.x -= temp_player_speed;
+			player.transform.vel.x -= player.transform.speed;
 		}
 		if (player.input.down) {
-			player.transform.vel.y += temp_player_speed;
+			player.transform.vel.y += player.transform.speed;
 		}
 		if (player.input.right) {
-			player.transform.vel.x += temp_player_speed;
+			player.transform.vel.x += player.transform.speed;
 		}
 
 

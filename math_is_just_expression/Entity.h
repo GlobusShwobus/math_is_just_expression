@@ -2,14 +2,15 @@
 
 #include "vec2.h"
 #include <SFML/Graphics.hpp>
+#include "json.hpp"
 
 class CTransform {
 public:
 	vec2 pos{ 0,0 };
 	vec2 vel{ 0,0 };
-	float angle = 0;
+	float speed = 0;
 
-	CTransform(const vec2& POS, const vec2& VEL, float a) :pos(POS), vel(VEL), angle(a) {}
+	CTransform(const vec2& POS, const vec2& VEL, float s) :pos(POS), vel(VEL), speed(s) {}
 	CTransform() = default;
 };
 
@@ -68,6 +69,8 @@ class Entity {
 
 	bool activeStatus = true;
 	bool destroyStatus = false;
+protected:
+
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
 
@@ -108,7 +111,22 @@ public:
 	CScore score;
 	CInput input;
 
-	Player(size_t ID, EntityType type) :Entity(ID, type), score(0) {}
+	Player(const nlohmann::json& config) :Entity(-1, EntityType::player), score(0) {
+		if (!(config.contains("Entities") && config["Entities"].contains("Player"))) {
+			throw std::runtime_error("Reading from JSON config file error");
+		}
+
+		//will throw if something is fucked up
+
+		auto& sh = config["Entities"]["Player"];
+
+		this->shape.rect.setSize({ sh["size_x"], sh["size_y"] });//maybe error because ints
+		this->shape.rect.setFillColor({ sh["Fill_color"][0],sh["Fill_color"][1] ,sh["Fill_color"][2] });//no, fuck you.
+		this->shape.rect.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
+		this->shape.rect.setOutlineThickness(sh["Outline_thickness"]);
+		this->transform.speed = sh["Base_speed"];
+
+	}
 
 };
 
@@ -119,7 +137,7 @@ class EntityManager {
 	std::unique_ptr<std::vector<Entity>> to_add;
 	std::unique_ptr<std::vector<Entity>> entities;
 
-	size_t total_entities;
+	size_t total_entities = 0;
 
 	void RemoveInactive() {
 		entities->erase(std::remove_if(entities->begin(), entities->end(), [&](Entity& ent) {
@@ -129,7 +147,7 @@ class EntityManager {
 
 public:
 
-	EntityManager(const size_t reserve_amount) {
+	EntityManager(const nlohmann::json& config, const size_t reserve_amount = 100) {
 		to_add = std::make_unique<std::vector<Entity>>();
 		entities = std::make_unique<std::vector<Entity>>();
 		entities->reserve(reserve_amount);
@@ -144,6 +162,27 @@ public:
 	}
 	void AddEntity(const EntityType type, const vec2& pos) {
 		//aint shit gonna happen untill we have JSON parsing done
+	}
+
+	void testspawn(const nlohmann::json& lolwtest123, const sf::Vector2i mousepos) {
+		Entity something (1, EntityType::enemy);
+		if (!(lolwtest123.contains("Entities") && lolwtest123["Entities"].contains("Player"))) {
+			throw std::runtime_error("Reading from JSON config file error");
+		}
+
+		//will throw if something is fucked up
+
+		auto& sh = lolwtest123["Entities"]["Player"];
+
+		something.shape.rect.setSize({ sh["size_x"], sh["size_y"] });//maybe error because ints
+		something.shape.rect.setFillColor({ sh["Fill_color"][0],sh["Fill_color"][1] ,sh["Fill_color"][2] });//no, fuck you. why do you think the try catch is here for?
+		something.shape.rect.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
+		something.shape.rect.setOutlineThickness(sh["Outline_thickness"]);
+		something.transform.speed = sh["Base_speed"];
+		something.transform.pos.x = mousepos.x;
+		something.transform.pos.y = mousepos.y;
+
+		entities->push_back(std::move(something));
 	}
 
 
