@@ -44,7 +44,7 @@ public:
 			if (!paused) {
 				sEnemySpawner();
 				sMovement();
-				//sCollision();
+				sCollision();
 			}
 			sUserInput();
 			sRender();
@@ -66,13 +66,13 @@ public:
 		window.clear();
 
 
-		//here draw other shit too
-
 		player.shape.rect.setPosition(player.transform.pos.x, player.transform.pos.y);
 
-		for (const auto& each : entities.GetEntities()) {
-			window.draw(each.shape.rect);
-		}
+		//here draw other shit too
+		
+		//for (const auto& each : entities.GetEntities()) {
+		//	window.draw(each.shape.rect);
+		//}
 
 		window.draw(player.shape.rect);
 		window.display();
@@ -111,7 +111,6 @@ public:
 			if (sfevent.type == sf::Event::MouseButtonPressed) {
 				if (sfevent.key.code == sf::Mouse::Left) {
 					player.input.shoot = true;
-					entities.testspawn(config, sf::Mouse::getPosition());
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
@@ -160,6 +159,12 @@ public:
 
 
 		player.transform.pos += player.transform.vel;
+	}
+
+	void sCollision() {
+		for (auto& each : entities.GetEntities()) {
+
+		}
 	}
 
 

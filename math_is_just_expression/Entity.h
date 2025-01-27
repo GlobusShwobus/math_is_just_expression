@@ -69,8 +69,6 @@ class Entity {
 
 	bool activeStatus = true;
 	bool destroyStatus = false;
-protected:
-
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
 
@@ -130,8 +128,16 @@ public:
 
 };
 
-//manager will read the JSON config, remember configs and then be responsible for creating entities
-//spawning happens here and only here, instead of how it is in the course thus AddEntity will be void and just take param which to create
+/*
+BIG JOB
+
+make private functions to spawn each type of shit
+
+decide what to do with config, either just keep it in json OR create custom structs for each, think JSON is more flexible but might be slower
+
+then unite that somehow in AddEntity (acts as a factory basically)
+
+*/
 class EntityManager {
 
 	std::unique_ptr<std::vector<Entity>> to_add;
@@ -162,27 +168,6 @@ public:
 	}
 	void AddEntity(const EntityType type, const vec2& pos) {
 		//aint shit gonna happen untill we have JSON parsing done
-	}
-
-	void testspawn(const nlohmann::json& lolwtest123, const sf::Vector2i mousepos) {
-		Entity something (1, EntityType::enemy);
-		if (!(lolwtest123.contains("Entities") && lolwtest123["Entities"].contains("Player"))) {
-			throw std::runtime_error("Reading from JSON config file error");
-		}
-
-		//will throw if something is fucked up
-
-		auto& sh = lolwtest123["Entities"]["Player"];
-
-		something.shape.rect.setSize({ sh["size_x"], sh["size_y"] });//maybe error because ints
-		something.shape.rect.setFillColor({ sh["Fill_color"][0],sh["Fill_color"][1] ,sh["Fill_color"][2] });//no, fuck you. why do you think the try catch is here for?
-		something.shape.rect.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
-		something.shape.rect.setOutlineThickness(sh["Outline_thickness"]);
-		something.transform.speed = sh["Base_speed"];
-		something.transform.pos.x = mousepos.x;
-		something.transform.pos.y = mousepos.y;
-
-		entities->push_back(std::move(something));
 	}
 
 
