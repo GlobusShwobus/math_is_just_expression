@@ -3,7 +3,7 @@
 		"Player": {
 			"size_x": 20,
 			"size_y": 20,
-			"Fill_color": [ 125, 255, 100 ],
+			"Fill_color": [ 0, 255, 0 ],
 			"Outline_color": [ 0, 255, 0 ],
 			"Outline_thickness": 7,
 			"Base_speed": 5
@@ -12,16 +12,16 @@
 			"size_x": 20,
 			"size_y": 20,
 			"Fill_color": [ 255, 0, 0 ],
-			"Outline_color": [ 50, 10, 0 ],
+			"Outline_color": [ 255, 0, 0 ],
 			"Outline_thickness": 2,
 			"Base_speed": 5,
 			"Lifepoints": 100
 		},
 		"Bullet": {
-			"size_x": 20,
-			"size_y": 20,
-			"Fill_color": [ 255, 0, 0 ],
-			"Outline_color": [ 50, 10, 0 ],
+			"size_x": 5,
+			"size_y": 5,
+			"Fill_color": [ 0, 0, 255 ],
+			"Outline_color": [ 0, 0, 255 ],
 			"Outline_thickness": 2,
 			"Base_speed": 5,
 			"Lifepoints": 50

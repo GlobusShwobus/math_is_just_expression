@@ -16,6 +16,7 @@ int main() {
         return -1;
     }
 
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
     Game lolw123(config);
     lolw123.Init();

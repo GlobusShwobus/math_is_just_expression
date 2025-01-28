@@ -28,8 +28,8 @@ public:
 
 class CCollision {
 public:
-	float radius = 0;
-	CCollision(float rad) :radius(rad) {}
+	sf::FloatRect bb;
+	CCollision(sf::FloatRect& BB) :bb(BB) {}
 	CCollision() = default;
 };
 
@@ -62,7 +62,7 @@ public:
 class EntityManager;//pre declare or whatever the fuck
 
 enum class EntityType {
-	player, enemy, NULLTYPE
+	player, enemy, bullet, NULLTYPE
 };
 
 class Entity {
@@ -109,7 +109,7 @@ public:
 	CScore score;
 	CInput input;
 
-	Player(const nlohmann::json& config) :Entity(-1, EntityType::player), score(0) {
+	Player(const nlohmann::json& config, const vec2& pos) :Entity(-1, EntityType::player), score(0) {
 		if (!(config.contains("Entities") && config["Entities"].contains("Player"))) {
 			throw std::runtime_error("Reading from JSON config file error");
 		}
@@ -123,6 +123,9 @@ public:
 		this->shape.rect.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
 		this->shape.rect.setOutlineThickness(sh["Outline_thickness"]);
 		this->transform.speed = sh["Base_speed"];
+		this->transform.pos = pos;
+
+		this->colision.bb = this->shape.rect.getLocalBounds();
 
 	}
 
@@ -138,12 +141,65 @@ decide what to do with config, either just keep it in json OR create custom stru
 then unite that somehow in AddEntity (acts as a factory basically)
 
 */
+
+struct EnemyConf {
+	float size_x = 0;
+	float size_y = 0;
+	sf::Color fill;
+	sf::Color out;
+	int outline_thickness = 0;
+	float speed = 0.f;
+	int lifepoints = 0;
+};
+struct BulletConf {
+	float size_x = 0;
+	float size_y = 0;
+	sf::Color fill;
+	sf::Color out;
+	int outline_thickness = 0;
+	float speed = 0.f;
+	int lifepoints = 0;
+};
+
 class EntityManager {
 
 	std::unique_ptr<std::vector<Entity>> to_add;
 	std::unique_ptr<std::vector<Entity>> entities;
-
 	size_t total_entities = 0;
+
+
+	EnemyConf enemyconf;
+	BulletConf bulletconf;
+
+	void InitLocalConfig(const nlohmann::json& config) {
+		try {
+			auto& sh = config["Entities"];
+
+			//basic enemy
+			enemyconf.size_x = sh["Enemy"]["size_x"];
+			enemyconf.size_y = sh["Enemy"]["size_y"];
+			enemyconf.fill = sf::Color{ sh["Enemy"]["Fill_color"][0],sh["Enemy"]["Fill_color"][1] ,sh["Enemy"]["Fill_color"][2] };
+			enemyconf.out = sf::Color{ sh["Enemy"]["Outline_color"][0],sh["Enemy"]["Outline_color"][1] ,sh["Enemy"]["Outline_color"][2] };
+			enemyconf.outline_thickness = sh["Enemy"]["Outline_thickness"];
+			enemyconf.speed = sh["Enemy"]["Base_speed"];
+			enemyconf.lifepoints = sh["Enemy"]["Lifepoints"];
+
+			//basic bullet
+			bulletconf.size_x = sh["Bullet"]["size_x"];
+			bulletconf.size_y = sh["Bullet"]["size_y"];
+			bulletconf.fill = sf::Color{ sh["Bullet"]["Fill_color"][0],sh["Bullet"]["Fill_color"][1] ,sh["Bullet"]["Fill_color"][2] };
+			bulletconf.out = sf::Color{ sh["Bullet"]["Outline_color"][0],sh["Bullet"]["Outline_color"][1] ,sh["Bullet"]["Outline_color"][2] };
+			bulletconf.outline_thickness = sh["Bullet"]["Outline_thickness"];
+			bulletconf.speed = sh["Bullet"]["Base_speed"];
+			bulletconf.lifepoints = sh["Bullet"]["Lifepoints"];
+
+
+		}
+		catch (const std::exception&e) {
+			printf("\n%s", e.what());
+		}
+	}
+
 
 	void RemoveInactive() {
 		entities->erase(std::remove_if(entities->begin(), entities->end(), [&](Entity& ent) {
@@ -151,13 +207,16 @@ class EntityManager {
 			}), entities->end());
 	}
 
+
 public:
 
-	EntityManager(const nlohmann::json& config, const size_t reserve_amount = 100) {
+	EntityManager(const nlohmann::json& CONFIG, const size_t reserve_amount = 100) {
 		to_add = std::make_unique<std::vector<Entity>>();
 		entities = std::make_unique<std::vector<Entity>>();
 		entities->reserve(reserve_amount);
 		to_add->reserve(reserve_amount);
+
+		InitLocalConfig(CONFIG);
 	}
 
 	void Update() {
@@ -166,8 +225,33 @@ public:
 		to_add->clear();
 		RemoveInactive();
 	}
-	void AddEntity(const EntityType type, const vec2& pos) {
-		//aint shit gonna happen untill we have JSON parsing done
+	void AddEntity(const EntityType type, const vec2& _pos) {
+
+		Entity rarefrog(total_entities++, type);
+
+		if (type == EntityType::enemy) {
+			rarefrog.shape.rect.setSize({ enemyconf.size_x,enemyconf.size_y });
+			rarefrog.shape.rect.setFillColor(enemyconf.fill);
+			rarefrog.shape.rect.setOutlineColor(enemyconf.out);
+			rarefrog.shape.rect.setOutlineThickness(enemyconf.outline_thickness);
+			rarefrog.transform.speed = enemyconf.speed;
+			rarefrog.transform.pos = _pos;
+
+			rarefrog.colision.bb = rarefrog.shape.rect.getLocalBounds();
+		}
+		else if (type == EntityType::bullet) {
+			rarefrog.shape.rect.setSize({ bulletconf.size_x,bulletconf.size_y });
+			rarefrog.shape.rect.setFillColor(bulletconf.fill);
+			rarefrog.shape.rect.setOutlineColor(bulletconf.out);
+			rarefrog.shape.rect.setOutlineThickness(bulletconf.outline_thickness);
+			rarefrog.transform.speed = bulletconf.speed;
+			rarefrog.transform.pos = _pos;
+
+			rarefrog.colision.bb = rarefrog.shape.rect.getLocalBounds();
+		}
+
+
+		to_add->push_back(std::move(rarefrog));
 	}
 
 

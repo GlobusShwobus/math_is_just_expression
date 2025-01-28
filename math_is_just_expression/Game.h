@@ -10,7 +10,7 @@ class Game {
 
 	bool running = true;
 	bool paused = false;
-	size_t current_frame = 0;
+	int64_t current_frame = 0;
 
 	EntityManager entities;
 	Player player;
@@ -19,7 +19,7 @@ class Game {
 
 public:
 
-	Game(nlohmann::json& CONFIG) :config(CONFIG), entities(CONFIG), player(CONFIG) {}
+	Game(nlohmann::json& CONFIG) :config(CONFIG), entities(CONFIG), player(CONFIG, { 200,200 }) {}
 
 	void Init() {
 		//read from teh config json, the window one and set up window size, name, framrate
@@ -34,8 +34,6 @@ public:
 		//spawn player
 	}
 	void Run() {
-		//add pause, some sys should work while paused, others not
-
 
 		while (running) {
 
@@ -58,7 +56,18 @@ public:
 	}
 
 	void sEnemySpawner() {
-		//entity manager is not set upp all the way to support this, but essentially call addEntity function
+
+		static size_t last_spawn = 0;
+
+		if ((current_frame - last_spawn) >= 90) {
+
+			float pos_x = sf::Mouse::getPosition().x;//problemo for another dayno
+			float pos_y = sf::Mouse::getPosition().y;//problemo for another dayno
+
+			entities.AddEntity(EntityType::enemy, { pos_x, pos_y });
+			last_spawn = current_frame;
+			printf("\nYes spawn works bois");
+		}
 	}
 
 	void sRender() {
@@ -70,9 +79,10 @@ public:
 
 		//here draw other shit too
 		
-		//for (const auto& each : entities.GetEntities()) {
-		//	window.draw(each.shape.rect);
-		//}
+		for (auto& each : entities.GetEntities()) {
+			each.shape.rect.setPosition(each.transform.pos.x, each.transform.pos.y);
+			window.draw(each.shape.rect);
+		}
 
 		window.draw(player.shape.rect);
 		window.display();
@@ -111,6 +121,7 @@ public:
 			if (sfevent.type == sf::Event::MouseButtonPressed) {
 				if (sfevent.key.code == sf::Mouse::Left) {
 					player.input.shoot = true;
+					entities.AddEntity(EntityType::bullet, { 100,100 });
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
