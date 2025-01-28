@@ -131,17 +131,6 @@ public:
 
 };
 
-/*
-BIG JOB
-
-make private functions to spawn each type of shit
-
-decide what to do with config, either just keep it in json OR create custom structs for each, think JSON is more flexible but might be slower
-
-then unite that somehow in AddEntity (acts as a factory basically)
-
-*/
-
 struct EnemyConf {
 	float size_x = 0;
 	float size_y = 0;
