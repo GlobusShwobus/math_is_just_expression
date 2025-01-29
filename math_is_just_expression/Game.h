@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entity.h"
+#include <random>
 
 class Game {
 
@@ -17,21 +18,21 @@ class Game {
 
 	nlohmann::json& config;
 
+	std::mt19937 rng;
+
+
 public:
 
-	Game(nlohmann::json& CONFIG) :config(CONFIG), entities(CONFIG), player(CONFIG, { 200,200 }) {}
+	Game(nlohmann::json& CONFIG) :config(CONFIG), entities(CONFIG), player(CONFIG, { 200,200 }), rng(std::random_device()()) {}
 
 	void Init() {
-		//read from teh config json, the window one and set up window size, name, framrate
 
-		window.create(sf::VideoMode(1280, 720), "TEST123");
-		window.setFramerateLimit(60);
+		auto& sh = config["Window"];
 
 
-		//window.create(sf::Videomode(x,y),"name")
-		//window.setFramerateLimit(xyz)
+		window.create(sf::VideoMode(sh["size_x"].get<int>(), sh["size_y"].get<int>()), sh["game_name"].get<std::string>());
+		window.setFramerateLimit(sh["framerate_cap"].get<int>());
 
-		//spawn player
 	}
 	void Run() {
 
@@ -57,17 +58,18 @@ public:
 
 	void sEnemySpawner() {
 
+
+		
 		static size_t last_spawn = 0;
-
+		static std::uniform_int_distribution<> pos(0, 999);
+		static std::uniform_int_distribution<>vel(-5, 5);
+		
 		if ((current_frame - last_spawn) >= 90) {
-
-			float pos_x = sf::Mouse::getPosition().x;//problemo for another dayno
-			float pos_y = sf::Mouse::getPosition().y;//problemo for another dayno
-
-			entities.AddEntity(EntityType::enemy, { pos_x, pos_y });
+		
+			entities.AddEnemy({ (float)pos(rng), (float)pos(rng) }, { (float)vel(rng), (float)vel(rng) });
 			last_spawn = current_frame;
-			printf("\nYes spawn works bois");
 		}
+
 	}
 
 	void sRender() {
@@ -112,7 +114,7 @@ public:
 				switch (sfevent.key.code) {
 			    case sf::Keyboard::W: player.input.up    = false; break;
 				case sf::Keyboard::A: player.input.left  = false; break;
-				case sf::Keyboard::S: player.input.down  = false; break;
+				case sf::Keyboard::S: player.input.down = false; break;
 				case sf::Keyboard::D: player.input.right = false; break;
 				default: /*jack shit i think???*/ break;
 				}
@@ -121,7 +123,10 @@ public:
 			if (sfevent.type == sf::Event::MouseButtonPressed) {
 				if (sfevent.key.code == sf::Mouse::Left) {
 					player.input.shoot = true;
-					entities.AddEntity(EntityType::bullet, { 100,100 });
+
+					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+					entities.AddBullet({ player.transform.pos }, mousePos);
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
@@ -146,8 +151,7 @@ public:
 	}
 
 	void sMovement() {
-		//also make sure everything else that moves, moves
-		//think that's it tho
+
 		for (auto& each : entities.GetEntities()) {
 			each.transform.pos += each.transform.vel;
 		}
@@ -173,9 +177,54 @@ public:
 	}
 
 	void sCollision() {
+		std::vector<Entity*>bullets;
+		std::vector<Entity*>enemies;
+
 		for (auto& each : entities.GetEntities()) {
 
+			float size_x = each.shape.rect.getSize().x;
+			float size_y = each.shape.rect.getSize().y;
+
+			//for left and right edges
+			if (each.transform.pos.x < 0) {
+				each.transform.pos.x = 0;
+				each.transform.vel.x *= -1;
+			}
+			else if (each.transform.pos.x + size_x > window.getSize().x) {
+				each.transform.pos.x = window.getSize().x - size_x;
+				each.transform.vel.x *= -1;
+			}
+			//for up and down edges
+			if (each.transform.pos.y < 0) {
+				each.transform.pos.y = 0;
+				each.transform.vel.y *= -1;
+			}
+			else if (each.transform.pos.y + size_y > window.getSize().y) {
+				each.transform.pos.y = window.getSize().y - size_y;
+				each.transform.vel.y *= -1;
+			}
+
+			if (each.Type() == EntityType::bullet) {
+				bullets.push_back(&each);
+			}
+			else if (each.Type() == EntityType::enemy) {
+				enemies.push_back(&each);
+			}
 		}
+
+		for (auto* b : bullets) {
+			for (auto* e : enemies) {
+
+
+				//if (b->colision.bb.intersects(e->colision.bb)){
+				//	b->deactivate();
+				//	e->deactivate();
+				//}
+
+			}
+		}
+
+
 	}
 
 

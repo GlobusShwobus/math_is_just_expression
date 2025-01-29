@@ -5,7 +5,7 @@
 			"size_y": 20,
 			"Fill_color": [ 0, 255, 0 ],
 			"Outline_color": [ 0, 255, 0 ],
-			"Outline_thickness": 7,
+			"Outline_thickness": 0,
 			"Base_speed": 5
 		},
 		"Enemy": {
@@ -13,8 +13,8 @@
 			"size_y": 20,
 			"Fill_color": [ 255, 0, 0 ],
 			"Outline_color": [ 255, 0, 0 ],
-			"Outline_thickness": 2,
-			"Base_speed": 5,
+			"Outline_thickness": 0,
+			"Base_speed": 2,
 			"Lifepoints": 100
 		},
 		"Bullet": {
@@ -22,14 +22,23 @@
 			"size_y": 5,
 			"Fill_color": [ 0, 0, 255 ],
 			"Outline_color": [ 0, 0, 255 ],
-			"Outline_thickness": 2,
+			"Outline_thickness": 0,
 			"Base_speed": 5,
 			"Lifepoints": 50
+		},
+		"Obstacle": {
+			"size_x": 20,
+			"size_y": 20,
+			"Fill_color": [ 100, 255, 50 ],
+			"Outline_color": [ 255, 0, 0 ],
+			"Outline_thickness": 0,
+			"Base_speed": 0,
+			"Lifepoints": 10000
 		}
 	},
 	"Window": {
-		"size_x": 1280,
-		"size_y": 720,
+		"size_x": 1000,
+		"size_y": 1000,
 		"game_name": "pepega_game",
 		"framerate_cap": 80
 	}
