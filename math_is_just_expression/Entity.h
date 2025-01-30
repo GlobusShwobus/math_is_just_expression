@@ -2,29 +2,8 @@
 
 #include "vec2.h"
 #include <SFML/Graphics.hpp>
+
 #include "json.hpp"
-
-class CTransform {
-public:
-	vec2 pos{ 0,0 };
-	vec2 vel{ 0,0 };
-	float speed = 0;
-
-	CTransform(const vec2& POS, const vec2& VEL, float s) :pos(POS), vel(VEL), speed(s) {}
-	CTransform() = default;
-};
-
-class CShape {
-public:
-	sf::RectangleShape rect;
-	CShape() = default;
-	CShape(const sf::Vector2f& size, const sf::Color& fill, const sf::Color& outline, float thickness)
-		:rect(size) {
-		rect.setFillColor(fill);
-		rect.setOutlineColor(outline);
-		rect.setOutlineThickness(thickness);
-	}
-};
 
 class CScore {
 public:
@@ -68,8 +47,10 @@ public:
 
 	Entity(const size_t ID, const EntityType t):id(ID), type(t) {}
 
-	CTransform    transform;
-	CShape        shape;
+
+	vec2 position{ 0,0 };
+	vec2 velocity{ 0,0 };
+	sf::RectangleShape shape;
 	CLifespan     lifepoints;
 
 
@@ -95,6 +76,7 @@ public:
 
 	CScore score;
 	CInput input;
+	unsigned int speed = 0;
 
 	Player(const nlohmann::json& config, const vec2& pos) :Entity(-1, EntityType::player), score(0) {
 		if (!(config.contains("Entities") && config["Entities"].contains("Player"))) {
@@ -105,12 +87,12 @@ public:
 
 		auto& sh = config["Entities"]["Player"];
 
-		this->shape.rect.setSize({ sh["size_x"], sh["size_y"] });//maybe error because ints
-		this->shape.rect.setFillColor({ sh["Fill_color"][0],sh["Fill_color"][1] ,sh["Fill_color"][2] });//no, fuck you.
-		this->shape.rect.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
-		this->shape.rect.setOutlineThickness(sh["Outline_thickness"]);
-		this->transform.speed = sh["Base_speed"];
-		this->transform.pos = pos;
+		this->shape.setSize({ sh["size_x"], sh["size_y"] });//maybe error because ints
+		this->shape.setFillColor({ sh["Fill_color"][0],sh["Fill_color"][1] ,sh["Fill_color"][2] });//no, fuck you.
+		this->shape.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
+		this->shape.setOutlineThickness(sh["Outline_thickness"]);
+		this->speed = sh["Base_speed"];
+		this->position = pos;
 
 	}
 
@@ -146,10 +128,11 @@ struct ObstacleConf {
 
 class EntityManager {
 
-	std::unique_ptr<std::vector<Entity>> to_add;
-	std::unique_ptr<std::vector<Entity>> entities;
+	std::vector<std::shared_ptr<Entity>> add_next_frame;
+	std::vector<std::shared_ptr<Entity>> all;
+	std::map<EntityType, std::vector<std::shared_ptr<Entity>>> per_type;
+	
 	size_t total_entities = 0;
-
 
 	EnemyConf enemyconf;
 	BulletConf bulletconf;
@@ -195,77 +178,94 @@ class EntityManager {
 
 
 	void RemoveInactive() {
-		entities->erase(std::remove_if(entities->begin(), entities->end(), [&](Entity& ent) {
-			return !ent.IsActive();
-			}), entities->end());
-	}
 
+		all.erase(std::remove_if(all.begin(), all.end(), [&](std::shared_ptr<Entity>& ent) {
+			return !ent->IsActive();
+			}), all.end());
+
+
+		for (auto& pair : per_type) {
+			auto& it = pair.second;
+			it.erase(std::remove_if(it.begin(), it.end(), [&](std::shared_ptr<Entity>& ent) {
+				return !ent->IsActive();
+				}), it.end());
+		}
+	}
 
 public:
 
-	EntityManager(const nlohmann::json& CONFIG, const size_t reserve_amount = 100) {
-		to_add = std::make_unique<std::vector<Entity>>();
-		entities = std::make_unique<std::vector<Entity>>();
-		entities->reserve(reserve_amount);
-		to_add->reserve(reserve_amount);
-
+	EntityManager(const nlohmann::json& CONFIG) {
 		InitLocalConfig(CONFIG);
 	}
 
 	void Update() {
 		//avoids iterator invalidation?
-		std::move(to_add->begin(), to_add->end(), std::back_inserter(*entities));
-		to_add->clear();
+
+
+		for (std::shared_ptr<Entity>& ent : add_next_frame) {
+			all.push_back(ent);
+			per_type[ent->Type()].push_back(ent);
+		}
+
+		add_next_frame.clear();
 		RemoveInactive();
+		printf("ent size: %d\n", (int)all.size());
 	}
 
 	void AddEnemy(const vec2& POS, const vec2& VEL) {
-		Entity rarefrog(total_entities++, EntityType::enemy);
 
-		rarefrog.shape.rect.setSize({ enemyconf.size_x,enemyconf.size_y });
-		rarefrog.shape.rect.setFillColor(enemyconf.fill);
-		rarefrog.shape.rect.setOutlineColor(enemyconf.out);
-		rarefrog.shape.rect.setOutlineThickness(enemyconf.outline_thickness);
-		rarefrog.transform.speed = enemyconf.speed;
-		rarefrog.transform.vel = VEL;
-		rarefrog.transform.pos = POS;
+		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::enemy));
 
-		to_add->push_back(std::move(rarefrog));
+		rarefrog->shape.setSize({ enemyconf.size_x,enemyconf.size_y });
+		rarefrog->shape.setFillColor(enemyconf.fill);
+		rarefrog->shape.setOutlineColor(enemyconf.out);
+		rarefrog->shape.setOutlineThickness(enemyconf.outline_thickness);
+
+		rarefrog->velocity = VEL;
+		rarefrog->position = POS;
+
+
+		add_next_frame.push_back(rarefrog);
 	}
 	void AddBullet(const vec2& origin, const sf::Vector2f& target) {
-		Entity rarefrog(total_entities++, EntityType::bullet);
 
-		rarefrog.shape.rect.setSize({ bulletconf.size_x,bulletconf.size_y });
-		rarefrog.shape.rect.setFillColor(bulletconf.fill);
-		rarefrog.shape.rect.setOutlineColor(bulletconf.out);
-		rarefrog.shape.rect.setOutlineThickness(bulletconf.outline_thickness);
+		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::bullet));
+
+
+		rarefrog->shape.setSize({ bulletconf.size_x,bulletconf.size_y });
+		rarefrog->shape.setFillColor(bulletconf.fill);
+		rarefrog->shape.setOutlineColor(bulletconf.out);
+		rarefrog->shape.setOutlineThickness(bulletconf.outline_thickness);
 
 		vec2 direction = { target.x - origin.x, target.y - origin.y };
 
 		float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
 		direction /= length;
 
-		rarefrog.transform.vel = direction * bulletconf.speed;
-		rarefrog.transform.pos = origin;
+		rarefrog->velocity = direction * bulletconf.speed;
+		rarefrog->position = origin;
 
-		to_add->push_back(std::move(rarefrog));
+
+		add_next_frame.push_back(rarefrog);
 	}
 	void AddObstacle(const vec2& POS) {
-		Entity rarefrog(total_entities++, EntityType::obstacle);
+		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::obstacle));
 
-		rarefrog.shape.rect.setSize({ obstacleconf.size_x,obstacleconf.size_y });
-		rarefrog.shape.rect.setFillColor(obstacleconf.fill);
-		rarefrog.shape.rect.setOutlineColor(obstacleconf.out);
-		rarefrog.shape.rect.setOutlineThickness(obstacleconf.outline_thickness);
-		rarefrog.transform.speed = obstacleconf.speed;
-		rarefrog.transform.vel = { obstacleconf.speed , obstacleconf.speed };
-		rarefrog.transform.pos = POS;
+		rarefrog->shape.setSize({ obstacleconf.size_x,obstacleconf.size_y });
+		rarefrog->shape.setFillColor(obstacleconf.fill);
+		rarefrog->shape.setOutlineColor(obstacleconf.out);
+		rarefrog->shape.setOutlineThickness(obstacleconf.outline_thickness);
 
-		to_add->push_back(std::move(rarefrog));
+		rarefrog->velocity = { obstacleconf.speed , obstacleconf.speed };
+		rarefrog->position = POS;
+
+		add_next_frame.push_back(rarefrog);
 	}
 
-	std::vector<Entity>& GetEntities() {
-		return *entities;
+	const std::vector<std::shared_ptr<Entity>>& GetEntities()const {
+		return all;
 	}
-
+	const std::vector<std::shared_ptr<Entity>>& GetEntities(const EntityType t) {
+		return per_type[t];
+	}
 };

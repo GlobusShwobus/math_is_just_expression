@@ -30,7 +30,7 @@ public:
 		auto& sh = config["Window"];
 
 
-		window.create(sf::VideoMode(sh["size_x"].get<int>(), sh["size_y"].get<int>()), sh["game_name"].get<std::string>());
+		window.create(sf::VideoMode(sh["width"].get<int>(), sh["height"].get<int>()), sh["game_name"].get<std::string>());
 		window.setFramerateLimit(sh["framerate_cap"].get<int>());
 
 	}
@@ -62,7 +62,7 @@ public:
 		
 		static size_t last_spawn = 0;
 		static std::uniform_int_distribution<> pos(0, 999);
-		static std::uniform_int_distribution<>vel(-5, 5);
+		static std::uniform_int_distribution<> vel(-5, 5);
 		
 		if ((current_frame - last_spawn) >= 90) {
 		
@@ -77,16 +77,17 @@ public:
 		window.clear();
 
 
-		player.shape.rect.setPosition(player.transform.pos.x, player.transform.pos.y);
+		player.shape.setPosition(player.position.x, player.position.y);
 
 		//here draw other shit too
 		
 		for (auto& each : entities.GetEntities()) {
-			each.shape.rect.setPosition(each.transform.pos.x, each.transform.pos.y);
-			window.draw(each.shape.rect);
+			
+			each->shape.setPosition(each->position.x, each->position.y);
+			window.draw(each->shape);
 		}
 
-		window.draw(player.shape.rect);
+		window.draw(player.shape);
 		window.display();
 	}
 
@@ -126,7 +127,7 @@ public:
 
 					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-					entities.AddBullet({ player.transform.pos }, mousePos);
+					entities.AddBullet({ player.position }, mousePos);
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
@@ -153,77 +154,66 @@ public:
 	void sMovement() {
 
 		for (auto& each : entities.GetEntities()) {
-			each.transform.pos += each.transform.vel;
+			each->position += each->velocity;
 		}
 
-		player.transform.vel = { 0,0 };		//reset vel each frame
+		player.velocity = { 0,0 };		//reset vel each frame
 
 		if (player.input.up) {
-			player.transform.vel.y -= player.transform.speed;
+			player.velocity.y -= player.speed;
 		}
 		if (player.input.left) {
-			player.transform.vel.x -= player.transform.speed;
+			player.velocity.x -= player.speed;
 		}
 		if (player.input.down) {
-			player.transform.vel.y += player.transform.speed;
+			player.velocity.y += player.speed;
 		}
 		if (player.input.right) {
-			player.transform.vel.x += player.transform.speed;
+			player.velocity.x += player.speed;
 		}
 
 
 
-		player.transform.pos += player.transform.vel;
+		player.position += player.velocity;
 	}
 
 	void sCollision() {
-		std::vector<Entity*>bullets;
-		std::vector<Entity*>enemies;
 
 		for (auto& each : entities.GetEntities()) {
 
-			float size_x = each.shape.rect.getSize().x;
-			float size_y = each.shape.rect.getSize().y;
+			float size_x = each->shape.getSize().x;
+			float size_y = each->shape.getSize().y;
 
 			//for left and right edges
-			if (each.transform.pos.x < 0) {
-				each.transform.pos.x = 0;
-				each.transform.vel.x *= -1;
+			if (each->position.x < 0) {
+				each->position.x = 0;
+				each->velocity.x *= -1;
 			}
-			else if (each.transform.pos.x + size_x > window.getSize().x) {
-				each.transform.pos.x = window.getSize().x - size_x;
-				each.transform.vel.x *= -1;
+			else if (each->position.x + size_x > window.getSize().x) {
+				each->position.x = window.getSize().x - size_x;
+				each->velocity.x *= -1;
 			}
 			//for up and down edges
-			if (each.transform.pos.y < 0) {
-				each.transform.pos.y = 0;
-				each.transform.vel.y *= -1;
+			if (each->position.y < 0) {
+				each->position.y = 0;
+				each->velocity.y *= -1;
 			}
-			else if (each.transform.pos.y + size_y > window.getSize().y) {
-				each.transform.pos.y = window.getSize().y - size_y;
-				each.transform.vel.y *= -1;
+			else if (each->position.y + size_y > window.getSize().y) {
+				each->position.y = window.getSize().y - size_y;
+				each->velocity.y *= -1;
 			}
 
-			if (each.Type() == EntityType::bullet) {
-				bullets.push_back(&each);
-			}
-			else if (each.Type() == EntityType::enemy) {
-				enemies.push_back(&each);
-			}
 		}
 
-		for (auto* b : bullets) {
-			for (auto* e : enemies) {
 
-
-				//if (b->colision.bb.intersects(e->colision.bb)){
-				//	b->deactivate();
-				//	e->deactivate();
-				//}
-
+		for (auto& bullets : entities.GetEntities(EntityType::bullet)) {
+			for (auto& enemes : entities.GetEntities(EntityType::enemy)) {
+				if (bullets->shape.getGlobalBounds().intersects(enemes->shape.getGlobalBounds())) {
+					bullets->deactivate();
+					enemes->deactivate();
+				}
 			}
 		}
-
 
 	}
 
