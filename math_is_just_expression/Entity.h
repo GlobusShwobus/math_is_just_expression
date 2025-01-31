@@ -37,17 +37,22 @@ enum class EntityType {
 	player, enemy, bullet, obstacle, NULLTYPE
 };
 
+
+
+
 class Entity {
+
+	friend class Player;
+	friend class EntityManager;
 
 	bool activeStatus = true;
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
 
+
+	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
+
 public:
-
-	Entity(const size_t ID, const EntityType t):id(ID), type(t) {}
-
-
 	vec2 position{ 0,0 };
 	vec2 velocity{ 0,0 };
 	sf::RectangleShape shape;
@@ -126,6 +131,7 @@ struct ObstacleConf {
 	int lifepoints = 0;
 };
 
+
 class EntityManager {
 
 	std::vector<std::shared_ptr<Entity>> add_next_frame;
@@ -137,6 +143,9 @@ class EntityManager {
 	EnemyConf enemyconf;
 	BulletConf bulletconf;
 	ObstacleConf obstacleconf;
+
+
+	vec2 window_size = { 0,0 };
 
 	void InitLocalConfig(const nlohmann::json& config) {
 		try {
@@ -169,13 +178,40 @@ class EntityManager {
 			obstacleconf.speed = sh["Obstacle"]["Base_speed"];
 			obstacleconf.lifepoints = sh["Obstacle"]["Lifepoints"];
 
-
+			window_size = { config["Window"]["width"], config["Window"]["height"] };
 		}
 		catch (const std::exception&e) {
 			printf("\n%s", e.what());
 		}
 	}
 
+	bool PosIsFree(vec2& pos) {
+		for (auto& each : all) {
+
+			if (each->shape.getGlobalBounds().contains(pos.x, pos.y)) {//thank god for me not doing this
+
+				float tileSizeX = each->shape.getSize().x;
+				float tileSizeY = each->shape.getSize().y;
+
+				pos.x += tileSizeX;
+
+				if (pos.x >= window_size.x) {//lock inside the screen
+					pos.x = 0;
+					pos.y += tileSizeY;
+				}
+
+
+				if (pos.y >= window_size.y) {//fucked if exeeds x and y
+					return false;
+				}
+
+				return PosIsFree(pos);
+			}
+
+		}
+
+		return true;
+	}
 
 	void RemoveInactive() {
 
@@ -212,17 +248,21 @@ public:
 		printf("ent size: %d\n", (int)all.size());
 	}
 
-	void AddEnemy(const vec2& POS, const vec2& VEL) {
+	void AddEnemy(vec2& POS, const vec2& VEL) {
 
 		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::enemy));
+
+		if (!PosIsFree(POS)) {
+			printf("\nEntity outside window bounds");
+			return;
+		}
+		rarefrog->velocity = VEL;
+		rarefrog->position = POS;
 
 		rarefrog->shape.setSize({ enemyconf.size_x,enemyconf.size_y });
 		rarefrog->shape.setFillColor(enemyconf.fill);
 		rarefrog->shape.setOutlineColor(enemyconf.out);
 		rarefrog->shape.setOutlineThickness(enemyconf.outline_thickness);
-
-		rarefrog->velocity = VEL;
-		rarefrog->position = POS;
 
 
 		add_next_frame.push_back(rarefrog);
@@ -248,16 +288,21 @@ public:
 
 		add_next_frame.push_back(rarefrog);
 	}
-	void AddObstacle(const vec2& POS) {
+	void AddObstacle(vec2& POS) {
 		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::obstacle));
+
+		if (!PosIsFree(POS)) {
+			printf("\nEntity outside window bounds");
+			return;
+		}
+
+		rarefrog->velocity = { obstacleconf.speed , obstacleconf.speed };
+		rarefrog->position = POS;
 
 		rarefrog->shape.setSize({ obstacleconf.size_x,obstacleconf.size_y });
 		rarefrog->shape.setFillColor(obstacleconf.fill);
 		rarefrog->shape.setOutlineColor(obstacleconf.out);
 		rarefrog->shape.setOutlineThickness(obstacleconf.outline_thickness);
-
-		rarefrog->velocity = { obstacleconf.speed , obstacleconf.speed };
-		rarefrog->position = POS;
 
 		add_next_frame.push_back(rarefrog);
 	}

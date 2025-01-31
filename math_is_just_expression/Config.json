@@ -29,8 +29,8 @@
 		"Obstacle": {
 			"size_x": 20,
 			"size_y": 20,
-			"Fill_color": [ 100, 255, 50 ],
-			"Outline_color": [ 255, 0, 0 ],
+			"Fill_color": [ 255, 105 ,180 ],
+			"Outline_color": [ 255, 105, 180 ],
 			"Outline_thickness": 0,
 			"Base_speed": 0,
 			"Lifepoints": 10000

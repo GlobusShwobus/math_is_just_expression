@@ -33,7 +33,20 @@ public:
 		window.create(sf::VideoMode(sh["width"].get<int>(), sh["height"].get<int>()), sh["game_name"].get<std::string>());
 		window.setFramerateLimit(sh["framerate_cap"].get<int>());
 
+
+		const int obstacles_count = 50;
+
+		std::uniform_int_distribution<> x(0, window.getSize().x);
+		std::uniform_int_distribution<> y(0, window.getSize().y);
+
+		for (int i = 0; i < obstacles_count; ++i) {
+			vec2 pos = { (float)x(rng), (float)y(rng) };
+			entities.AddObstacle(pos);
+		}
+
 	}
+
+
 	void Run() {
 
 		while (running) {
@@ -58,15 +71,13 @@ public:
 
 	void sEnemySpawner() {
 
-
-		
 		static size_t last_spawn = 0;
 		static std::uniform_int_distribution<> pos(0, 999);
 		static std::uniform_int_distribution<> vel(-5, 5);
 		
 		if ((current_frame - last_spawn) >= 90) {
-		
-			entities.AddEnemy({ (float)pos(rng), (float)pos(rng) }, { (float)vel(rng), (float)vel(rng) });
+			vec2 POS = { (float)pos(rng), (float)pos(rng) };
+			entities.AddEnemy(POS, { (float)vel(rng), (float)vel(rng) });
 			last_spawn = current_frame;
 		}
 
@@ -79,7 +90,6 @@ public:
 
 		player.shape.setPosition(player.position.x, player.position.y);
 
-		//here draw other shit too
 		
 		for (auto& each : entities.GetEntities()) {
 			
@@ -214,6 +224,23 @@ public:
 				}
 			}
 		}
+		for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
+			for (auto& each : entities.GetEntities()) {
+
+				if (each->Type() == EntityType::obstacle) {
+					continue;
+				}
+
+
+				bool collisionX = each->position.x + each->shape.getSize().x >= obstacle->position.x && each->position.x <= obstacle->position.x + obstacle->shape.getSize().x;
+				bool collisionY = each->position.y + each->shape.getSize().y >= obstacle->position.y && each->position.y <= obstacle->position.y + obstacle->shape.getSize().y;
+
+				if (collisionX && collisionY) {
+					each->velocity *= -1;
+				}
+			}
+		}
+
 
 	}
 
