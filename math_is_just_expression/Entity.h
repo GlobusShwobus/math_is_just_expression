@@ -71,6 +71,45 @@ public:
 	void deactivate() {
 		activeStatus = false;
 	}
+
+
+
+	bool DoesCollide(const Entity& other)const {
+		bool collisionX = position.x + shape.getSize().x >= other.position.x && position.x <= other.position.x + other.shape.getSize().x;
+		bool collisionY = position.y + shape.getSize().y >= other.position.y && position.y <= other.position.y + other.shape.getSize().y;
+
+		return collisionX && collisionY;
+	}
+
+	static vec2 ReflectCollisionProduct(const Entity& collider, const Entity& object) {
+		//for better physics also need to the object to react
+		vec2 normal(0.f, 0.f);
+
+		float overlap_left = collider.position.x + collider.shape.getSize().x - object.position.x;
+		float overlap_right = object.position.x + object.shape.getSize().x - collider.position.x;
+
+		float overlap_top = collider.position.y + collider.shape.getSize().y - object.position.y;
+		float overlap_bottom = object.position.y + object.shape.getSize().y - collider.position.y;
+
+		float minOverlap = std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
+
+		if (minOverlap == overlap_left) {
+			normal.x = -1;
+		}
+		else if (minOverlap == overlap_right) {
+			normal.x = 1;
+		}
+		else if (minOverlap == overlap_top) {
+			normal.y = -1;
+		}
+		else if (minOverlap == overlap_bottom) {
+			normal.y = 1;
+		}
+
+		float dot = collider.velocity.x * normal.x + collider.velocity.y * normal.y;
+		
+		return { collider.velocity.x - (2 * dot * normal.x), collider.velocity.y - (2 * dot * normal.y) };
+	}
 };
 
 //redefine score later to be read from JSON, basically remember the score, so don't use the  0 basically
@@ -186,31 +225,36 @@ class EntityManager {
 	}
 
 	bool PosIsFree(vec2& pos) {
-		for (auto& each : all) {
 
-			if (each->shape.getGlobalBounds().contains(pos.x, pos.y)) {//thank god for me not doing this
+		while (true) {
+			bool isFree = true;
 
-				float tileSizeX = each->shape.getSize().x;
-				float tileSizeY = each->shape.getSize().y;
+			for (const auto& each : all) {
+				const sf::FloatRect& bounds = each->shape.getGlobalBounds();
 
-				pos.x += tileSizeX;
+				if (bounds.contains(pos.x, pos.y)) {
 
-				if (pos.x >= window_size.x) {//lock inside the screen
-					pos.x = 0;
-					pos.y += tileSizeY;
+					isFree = false;
+
+					pos.x = bounds.left + bounds.width;
+
+
+					if (pos.x >= window_size.x) {
+						pos.x = 0; 
+						pos.y += bounds.height;
+					}
+
+					if (pos.y >= window_size.y) {
+						return false;
+					}
+					break;
 				}
-
-
-				if (pos.y >= window_size.y) {//fucked if exeeds x and y
-					return false;
-				}
-
-				return PosIsFree(pos);
 			}
 
+			if (isFree) {
+				return true;
+			}
 		}
-
-		return true;
 	}
 
 	void RemoveInactive() {

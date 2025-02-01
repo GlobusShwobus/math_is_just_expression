@@ -34,14 +34,73 @@ public:
 		window.setFramerateLimit(sh["framerate_cap"].get<int>());
 
 
-		const int obstacles_count = 50;
 
-		std::uniform_int_distribution<> x(0, window.getSize().x);
-		std::uniform_int_distribution<> y(0, window.getSize().y);
 
-		for (int i = 0; i < obstacles_count; ++i) {
-			vec2 pos = { (float)x(rng), (float)y(rng) };
-			entities.AddObstacle(pos);
+
+		static constexpr int obstacle_size_idk_where_to_put_atm = 20;
+
+
+		//draw bottom floor type thing
+		float darw_y_pos = window.getSize().y - obstacle_size_idk_where_to_put_atm;
+		float darw_x_pos = 0;
+
+		while (darw_x_pos - obstacle_size_idk_where_to_put_atm < window.getSize().x) {
+			vec2 compilermemes = { darw_x_pos ,darw_y_pos };
+			entities.AddObstacle(compilermemes);
+			darw_x_pos += obstacle_size_idk_where_to_put_atm;
+		}
+
+
+		static constexpr int platform_size = 7;
+		
+		float y_platform1_start = 100;
+		float x_platform1_start = 100;
+
+		float y_platform2_start = 200;
+		float x_platform2_start = 240;
+
+		float y_platform3_start = 300;
+		float x_platform3_start = 380;
+
+		float y_platform4_start = 400;
+		float x_platform4_start = 520;
+
+		float y_platform5_start = 500;
+		float x_platform5_start = 660;
+
+		float y_platform6_start = 600;
+		float x_platform6_start = 800;
+
+
+		for (int i = 0; i < platform_size; ++i) {
+			vec2 compilermemes = { x_platform1_start ,y_platform1_start };
+			x_platform1_start += obstacle_size_idk_where_to_put_atm;
+			entities.AddObstacle(compilermemes);
+		}
+		for (int i = 0; i < platform_size; ++i) {
+			vec2 compilermemes = { x_platform2_start ,y_platform2_start };
+			x_platform2_start += obstacle_size_idk_where_to_put_atm;
+			entities.AddObstacle(compilermemes);
+		}
+		for (int i = 0; i < platform_size; ++i) {
+			vec2 compilermemes = { x_platform3_start ,y_platform3_start };
+			x_platform3_start += obstacle_size_idk_where_to_put_atm;
+			entities.AddObstacle(compilermemes);
+		}
+		for (int i = 0; i < platform_size; ++i) {
+			vec2 compilermemes = { x_platform4_start ,y_platform4_start };
+			x_platform4_start += obstacle_size_idk_where_to_put_atm;
+			entities.AddObstacle(compilermemes);
+		}
+		for (int i = 0; i < platform_size; ++i) {
+			vec2 compilermemes = { x_platform5_start ,y_platform5_start };
+			x_platform5_start += obstacle_size_idk_where_to_put_atm;
+			entities.AddObstacle(compilermemes);
+		}
+		for (int i = 0; i < platform_size; ++i) {
+			vec2 compilermemes = { x_platform6_start ,y_platform6_start };
+			x_platform6_start += obstacle_size_idk_where_to_put_atm;
+			entities.AddObstacle(compilermemes);
 		}
 
 	}
@@ -130,11 +189,11 @@ public:
 				default: /*jack shit i think???*/ break;
 				}
 			}
-
-			if (sfevent.type == sf::Event::MouseButtonPressed) {
-				if (sfevent.key.code == sf::Mouse::Left) {
+			static bool hold_test = false;
+			if (sfevent.type == sf::Event::MouseButtonPressed || hold_test) {
+				if (sfevent.key.code == sf::Mouse::Left || hold_test) {
 					player.input.shoot = true;
-
+					hold_test = true;
 					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
 					entities.AddBullet({ player.position }, mousePos);
@@ -148,6 +207,7 @@ public:
 				}
 			}
 			if (sfevent.type == sf::Event::MouseButtonReleased) {
+				hold_test = false;
 				if (sfevent.key.code == sf::Mouse::Left) {
 					player.input.shoot = false;
 					//don't shoot any longer, (what about holding key???)
@@ -224,6 +284,7 @@ public:
 				}
 			}
 		}
+
 		for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
 			for (auto& each : entities.GetEntities()) {
 
@@ -232,11 +293,10 @@ public:
 				}
 
 
-				bool collisionX = each->position.x + each->shape.getSize().x >= obstacle->position.x && each->position.x <= obstacle->position.x + obstacle->shape.getSize().x;
-				bool collisionY = each->position.y + each->shape.getSize().y >= obstacle->position.y && each->position.y <= obstacle->position.y + obstacle->shape.getSize().y;
+				if (each->DoesCollide(*obstacle)) {
 
-				if (collisionX && collisionY) {
-					each->velocity *= -1;
+					each->velocity = Entity::ReflectCollisionProduct(*each, *obstacle);
+
 				}
 			}
 		}
