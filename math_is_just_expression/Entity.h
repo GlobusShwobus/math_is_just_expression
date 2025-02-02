@@ -34,15 +34,25 @@ public:
 	CInput() = default;
 };
 
-class Entity;
+class CTransform {
+	vec2 position = { 0,0 };
+	vec2 velocity = { 0,0 };
+	vec2 size = { 0,0 };
 
-namespace Collision {
+public:
 
-	bool DoesCollide(const Entity& en1, const Entity& en2);
+	CTransform() = default;
 
-	vec2 GetReflectionDot(const Entity& collider, const Entity& object);
-
-}
+	void SetPosition(const vec2& pos) {
+		position = pos;
+	}
+	void SetVelocity(const vec2& vel) {
+		velocity = vel;
+	}
+	void SetSize(const vec2& ezis) {
+		size = ezis;
+	}
+};
 
 class EntityManager;//pre declare or whatever the fuck
 
@@ -64,10 +74,10 @@ class Entity {
 	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
 
 public:
-	vec2 position{ 0,0 };
-	vec2 velocity{ 0,0 };
+
 	sf::RectangleShape shape;
 	CLifespan     lifepoints;
+	CTransform transform;
 
 	bool IsActive()const {
 		return activeStatus;
@@ -112,8 +122,9 @@ public:
 		this->shape.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
 		this->shape.setOutlineThickness(sh["Outline_thickness"]);
 		this->speed = sh["Base_speed"];
-		this->position = pos;
-
+		
+		this->transform.SetPosition(pos);
+		this->transform.SetSize({ shape.getSize().x, shape.getSize().y });
 	}
 
 };
@@ -276,14 +287,15 @@ public:
 			printf("\nEntity outside window bounds");
 			return;
 		}
-		rarefrog->velocity = VEL;
-		rarefrog->position = POS;
 
 		rarefrog->shape.setSize({ enemyconf.size_x,enemyconf.size_y });
 		rarefrog->shape.setFillColor(enemyconf.fill);
 		rarefrog->shape.setOutlineColor(enemyconf.out);
 		rarefrog->shape.setOutlineThickness(enemyconf.outline_thickness);
 
+		rarefrog->transform.SetPosition(POS);
+		rarefrog->transform.SetVelocity(VEL);
+		rarefrog->transform.SetSize({ enemyconf.size_x,enemyconf.size_y });
 
 		add_next_frame.push_back(rarefrog);
 	}
@@ -302,9 +314,9 @@ public:
 		float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
 		direction /= length;
 
-		rarefrog->velocity = direction * bulletconf.speed;
-		rarefrog->position = origin;
-
+		rarefrog->transform.SetPosition(origin);
+		rarefrog->transform.SetVelocity(direction * bulletconf.speed);
+		rarefrog->transform.SetSize({ bulletconf.size_x, bulletconf.size_y });
 
 		add_next_frame.push_back(rarefrog);
 	}
@@ -316,13 +328,14 @@ public:
 			return;
 		}
 
-		rarefrog->velocity = { obstacleconf.speed , obstacleconf.speed };
-		rarefrog->position = POS;
-
 		rarefrog->shape.setSize({ obstacleconf.size_x,obstacleconf.size_y });
 		rarefrog->shape.setFillColor(obstacleconf.fill);
 		rarefrog->shape.setOutlineColor(obstacleconf.out);
 		rarefrog->shape.setOutlineThickness(obstacleconf.outline_thickness);
+
+		rarefrog->transform.SetPosition(POS);
+		rarefrog->transform.SetVelocity({ obstacleconf.speed , obstacleconf.speed });
+		rarefrog->transform.SetSize({ obstacleconf.size_x, obstacleconf.size_y });
 
 		add_next_frame.push_back(rarefrog);
 	}

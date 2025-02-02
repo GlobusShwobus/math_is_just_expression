@@ -1,7 +1,7 @@
-#include "Entity.h"
+//#include "Entity.h"
 
 
-
+/*
 bool Collision::DoesCollide(const Entity& en1, const Entity& en2) {
 	bool collisionX = en1.position.x + en1.shape.getSize().x >= en2.position.x && en1.position.x <= en2.position.x + en2.shape.getSize().x;
 	bool collisionY = en1.position.y + en1.shape.getSize().y >= en2.position.y && en1.position.y <= en2.position.y + en2.shape.getSize().y;
@@ -36,3 +36,4 @@ vec2 Collision::GetReflectionDot(const Entity& collider, const Entity& object) {
 
 	return { 0,0 };
 }
+*/
