@@ -21,6 +21,9 @@
     <ClCompile Include="strings2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dump.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vec2.h">

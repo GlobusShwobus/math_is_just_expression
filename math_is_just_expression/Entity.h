@@ -34,41 +34,13 @@ public:
 	CInput() = default;
 };
 
+class Entity;
+
 namespace Collision {
 
-	bool DoesCollide(const sf::FloatRect& rect1, const sf::FloatRect& rect2) {
-		bool collisionX = rect1.left + rect1.width > rect2.left && rect1.left < rect2.left + rect2.width;
-		bool collisionY = rect1.top + rect1.height > rect2.top && rect1.top < rect2.top + rect2.height;
-		return collisionX && collisionY;
-	}
+	bool DoesCollide(const Entity& en1, const Entity& en2);
 
-	vec2 CollisionBreak(sf::FloatRect& rect1, sf::FloatRect& rect2) {
-
-		vec2 normal = {0,0};
-
-		float overlap_left = (rect1.left + rect1.width) - rect2.left;
-		float overlap_right = (rect2.left + rect2.width) - rect1.left;
-		float overlap_top = (rect1.top + rect1.height) - rect2.top;
-		float overlap_bottom = (rect2.top + rect2.height) - rect1.top;
-
-		float minOverlap = std::min({ overlap_left, overlap_right, overlap_top, overlap_bottom });
-
-
-		if (minOverlap == overlap_left) { rect1.left -= overlap_left;   normal.x = -1; }
-		else if (minOverlap == overlap_right) { rect1.left += overlap_right;  normal.x = 1; }
-		else if (minOverlap == overlap_top) { rect1.top -= overlap_top;     normal.y = -1; }
-		else if (minOverlap == overlap_bottom) { rect1.top += overlap_bottom;  normal.y = 1; }
-
-		return normal;
-        const float offset = 0.01f; // Adjust as needed
-        if (minOverlap == overlap_left || minOverlap == overlap_right) {
-        	rect1.left += (minOverlap == overlap_left ? -offset : offset);
-        }
-        else if (minOverlap == overlap_top || minOverlap == overlap_bottom) {
-        	rect1.top += (minOverlap == overlap_top ? -offset : offset);
-        }
-		return normal;
-	}
+	vec2 GetReflectionDot(const Entity& collider, const Entity& object);
 
 }
 

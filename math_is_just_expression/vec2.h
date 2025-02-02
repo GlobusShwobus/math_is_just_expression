@@ -95,7 +95,7 @@ public:
 
 
 namespace line {
-
+	/*
 	struct line {
 		vec2 beg = { 0,0 };
 		vec2 end = { 0,0 };
@@ -160,4 +160,5 @@ namespace line {
 
 		return sr;
 	}
+	*/
 }

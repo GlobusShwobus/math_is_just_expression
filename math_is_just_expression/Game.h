@@ -294,13 +294,8 @@ public:
 				if (each->Type() == EntityType::obstacle) {
 					continue;
 				}
-
-				auto each_bb = each->GetBoundingBox();
-				auto obs_bb = obstacle->GetBoundingBox();
-
-
-				if (Collision::DoesCollide(each_bb, obs_bb)) {
-					vec2 dir = Collision::CollisionBreak(each_bb, obs_bb);
+				if (Collision::DoesCollide(*each, *obstacle)) {
+					vec2 dir = Collision::GetReflectionDot(*each, *obstacle);
 					each->velocity.dot(dir);
 				}
 
