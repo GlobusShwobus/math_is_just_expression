@@ -5,11 +5,14 @@
 
 #include "json.hpp"
 
+/*
 class CScore {
 public:
 	int score = 0;
 	CScore(int s) :score(s){}
 };
+*/
+
 
 class CLifespan {
 public:
@@ -31,13 +34,58 @@ public:
 	CInput() = default;
 };
 
+class CCollision {
+
+	const sf::RectangleShape& from_shape;
+
+public:
+
+	bool DoesCollide(const sf::FloatRect& other)const {
+	
+		const sf::FloatRect bb = from_shape.getGlobalBounds();
+
+		bool collisionX = bb.left + bb.width >= other.left && bb.left <= other.left + other.width;
+		bool collisionY = bb.top + bb.height >= other.top && bb.top <= other.top + other.height;
+
+		return collisionX && collisionY;
+	}
+
+	void SetReflectionVelocity(vec2& velocity, const sf::FloatRect& other_bb)const {
+
+		vec2 normal(0.f, 0.f);
+		const sf::FloatRect bb = from_shape.getGlobalBounds();
+
+		float overlap_left = (bb.left + bb.width) - other_bb.left;
+		float overlap_right = (other_bb.left + other_bb.width) - bb.left;
+
+		float overlap_top = (bb.top + bb.height) - other_bb.top;
+		float overlap_bottom = (other_bb.top + other_bb.height) - bb.top;
+
+
+		float minOverlap = std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
+
+		if (minOverlap == overlap_left)        { normal.x = -1; }
+		else if (minOverlap == overlap_right)  { normal.x = 1; }
+		else if (minOverlap == overlap_top)    { normal.y = -1; }
+		else if (minOverlap == overlap_bottom) { normal.y = 1; }
+
+
+		float dot = velocity.x * normal.x + velocity.y * normal.y;
+
+		velocity.x -= (2 * dot * normal.x);
+		velocity.y -= (2 * dot * normal.y);
+	}
+
+	
+	CCollision(const sf::RectangleShape& for_bb) :from_shape(for_bb) {}
+};
+
+
 class EntityManager;//pre declare or whatever the fuck
 
 enum class EntityType {
 	player, enemy, bullet, obstacle, NULLTYPE
 };
-
-
 
 
 class Entity {
@@ -50,13 +98,14 @@ class Entity {
 	EntityType type = EntityType::NULLTYPE;
 
 
-	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
+	Entity(const size_t ID, const EntityType t) :id(ID), type(t), collision(shape) {}
 
 public:
 	vec2 position{ 0,0 };
 	vec2 velocity{ 0,0 };
 	sf::RectangleShape shape;
 	CLifespan     lifepoints;
+	CCollision    collision;
 
 
 	bool IsActive()const {
@@ -72,44 +121,6 @@ public:
 		activeStatus = false;
 	}
 
-
-
-	bool DoesCollide(const Entity& other)const {
-		bool collisionX = position.x + shape.getSize().x >= other.position.x && position.x <= other.position.x + other.shape.getSize().x;
-		bool collisionY = position.y + shape.getSize().y >= other.position.y && position.y <= other.position.y + other.shape.getSize().y;
-
-		return collisionX && collisionY;
-	}
-
-	static vec2 ReflectCollisionProduct(const Entity& collider, const Entity& object) {
-		//for better physics also need to the object to react
-		vec2 normal(0.f, 0.f);
-
-		float overlap_left = collider.position.x + collider.shape.getSize().x - object.position.x;
-		float overlap_right = object.position.x + object.shape.getSize().x - collider.position.x;
-
-		float overlap_top = collider.position.y + collider.shape.getSize().y - object.position.y;
-		float overlap_bottom = object.position.y + object.shape.getSize().y - collider.position.y;
-
-		float minOverlap = std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
-
-		if (minOverlap == overlap_left) {
-			normal.x = -1;
-		}
-		else if (minOverlap == overlap_right) {
-			normal.x = 1;
-		}
-		else if (minOverlap == overlap_top) {
-			normal.y = -1;
-		}
-		else if (minOverlap == overlap_bottom) {
-			normal.y = 1;
-		}
-
-		float dot = collider.velocity.x * normal.x + collider.velocity.y * normal.y;
-		
-		return { collider.velocity.x - (2 * dot * normal.x), collider.velocity.y - (2 * dot * normal.y) };
-	}
 };
 
 //redefine score later to be read from JSON, basically remember the score, so don't use the  0 basically
@@ -118,11 +129,11 @@ class Player: public Entity {
 
 public:
 
-	CScore score;
+	//CScore score;
 	CInput input;
 	unsigned int speed = 0;
 
-	Player(const nlohmann::json& config, const vec2& pos) :Entity(-1, EntityType::player), score(0) {
+	Player(const nlohmann::json& config, const vec2& pos) :Entity(-1, EntityType::player) {
 		if (!(config.contains("Entities") && config["Entities"].contains("Player"))) {
 			throw std::runtime_error("Reading from JSON config file error");
 		}

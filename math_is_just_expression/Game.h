@@ -41,6 +41,7 @@ public:
 
 
 		//draw bottom floor type thing
+		//dont forget to del this 
 		float darw_y_pos = window.getSize().y - obstacle_size_idk_where_to_put_atm;
 		float darw_x_pos = 0;
 
@@ -129,6 +130,8 @@ public:
 	}
 
 	void sEnemySpawner() {
+
+		//temp garbo
 
 		static size_t last_spawn = 0;
 		static std::uniform_int_distribution<> pos(0, 999);
@@ -291,12 +294,9 @@ public:
 				if (each->Type() == EntityType::obstacle) {
 					continue;
 				}
+				if (each->collision.DoesCollide(obstacle->shape.getGlobalBounds())){
 
-
-				if (each->DoesCollide(*obstacle)) {
-
-					each->velocity = Entity::ReflectCollisionProduct(*each, *obstacle);
-
+					each->collision.SetReflectionVelocity(each->velocity, obstacle->shape.getGlobalBounds());
 				}
 			}
 		}
