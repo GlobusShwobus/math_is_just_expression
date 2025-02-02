@@ -294,10 +294,16 @@ public:
 				if (each->Type() == EntityType::obstacle) {
 					continue;
 				}
-				if (each->collision.DoesCollide(obstacle->shape.getGlobalBounds())){
 
-					each->collision.SetReflectionVelocity(each->velocity, obstacle->shape.getGlobalBounds());
+				auto each_bb = each->GetBoundingBox();
+				auto obs_bb = obstacle->GetBoundingBox();
+
+
+				if (Collision::DoesCollide(each_bb, obs_bb)) {
+					vec2 dir = Collision::CollisionBreak(each_bb, obs_bb);
+					each->velocity.dot(dir);
 				}
+
 			}
 		}
 

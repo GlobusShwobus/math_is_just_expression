@@ -34,52 +34,43 @@ public:
 	CInput() = default;
 };
 
-class CCollision {
+namespace Collision {
 
-	const sf::RectangleShape& from_shape;
-
-public:
-
-	bool DoesCollide(const sf::FloatRect& other)const {
-	
-		const sf::FloatRect bb = from_shape.getGlobalBounds();
-
-		bool collisionX = bb.left + bb.width >= other.left && bb.left <= other.left + other.width;
-		bool collisionY = bb.top + bb.height >= other.top && bb.top <= other.top + other.height;
-
+	bool DoesCollide(const sf::FloatRect& rect1, const sf::FloatRect& rect2) {
+		bool collisionX = rect1.left + rect1.width > rect2.left && rect1.left < rect2.left + rect2.width;
+		bool collisionY = rect1.top + rect1.height > rect2.top && rect1.top < rect2.top + rect2.height;
 		return collisionX && collisionY;
 	}
 
-	void SetReflectionVelocity(vec2& velocity, const sf::FloatRect& other_bb)const {
+	vec2 CollisionBreak(sf::FloatRect& rect1, sf::FloatRect& rect2) {
 
-		vec2 normal(0.f, 0.f);
-		const sf::FloatRect bb = from_shape.getGlobalBounds();
+		vec2 normal = {0,0};
 
-		float overlap_left = (bb.left + bb.width) - other_bb.left;
-		float overlap_right = (other_bb.left + other_bb.width) - bb.left;
+		float overlap_left = (rect1.left + rect1.width) - rect2.left;
+		float overlap_right = (rect2.left + rect2.width) - rect1.left;
+		float overlap_top = (rect1.top + rect1.height) - rect2.top;
+		float overlap_bottom = (rect2.top + rect2.height) - rect1.top;
 
-		float overlap_top = (bb.top + bb.height) - other_bb.top;
-		float overlap_bottom = (other_bb.top + other_bb.height) - bb.top;
-
-
-		float minOverlap = std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
-
-		if (minOverlap == overlap_left)        { normal.x = -1; }
-		else if (minOverlap == overlap_right)  { normal.x = 1; }
-		else if (minOverlap == overlap_top)    { normal.y = -1; }
-		else if (minOverlap == overlap_bottom) { normal.y = 1; }
+		float minOverlap = std::min({ overlap_left, overlap_right, overlap_top, overlap_bottom });
 
 
-		float dot = velocity.x * normal.x + velocity.y * normal.y;
+		if (minOverlap == overlap_left) { rect1.left -= overlap_left;   normal.x = -1; }
+		else if (minOverlap == overlap_right) { rect1.left += overlap_right;  normal.x = 1; }
+		else if (minOverlap == overlap_top) { rect1.top -= overlap_top;     normal.y = -1; }
+		else if (minOverlap == overlap_bottom) { rect1.top += overlap_bottom;  normal.y = 1; }
 
-		velocity.x -= (2 * dot * normal.x);
-		velocity.y -= (2 * dot * normal.y);
+		return normal;
+        const float offset = 0.01f; // Adjust as needed
+        if (minOverlap == overlap_left || minOverlap == overlap_right) {
+        	rect1.left += (minOverlap == overlap_left ? -offset : offset);
+        }
+        else if (minOverlap == overlap_top || minOverlap == overlap_bottom) {
+        	rect1.top += (minOverlap == overlap_top ? -offset : offset);
+        }
+		return normal;
 	}
 
-	
-	CCollision(const sf::RectangleShape& for_bb) :from_shape(for_bb) {}
-};
-
+}
 
 class EntityManager;//pre declare or whatever the fuck
 
@@ -98,15 +89,13 @@ class Entity {
 	EntityType type = EntityType::NULLTYPE;
 
 
-	Entity(const size_t ID, const EntityType t) :id(ID), type(t), collision(shape) {}
+	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
 
 public:
 	vec2 position{ 0,0 };
 	vec2 velocity{ 0,0 };
 	sf::RectangleShape shape;
 	CLifespan     lifepoints;
-	CCollision    collision;
-
 
 	bool IsActive()const {
 		return activeStatus;
@@ -119,6 +108,10 @@ public:
 	}
 	void deactivate() {
 		activeStatus = false;
+	}
+
+	sf::FloatRect GetBoundingBox()const {
+		return shape.getGlobalBounds();
 	}
 
 };

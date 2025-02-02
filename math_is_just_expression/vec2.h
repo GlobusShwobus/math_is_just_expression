@@ -83,6 +83,13 @@ public:
 		return { x / len, y / len };
 	}
 
+	void dot(const vec2& something) {
+		float dot = x * something.x + y * something.y;
+
+		x -= (2 * dot * something.x);
+		y -= (2 * dot * something.y);
+	}
+
 };
 
 
