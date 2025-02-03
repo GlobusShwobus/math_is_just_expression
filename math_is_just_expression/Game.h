@@ -33,76 +33,20 @@ public:
 		window.create(sf::VideoMode(sh["width"].get<int>(), sh["height"].get<int>()), sh["game_name"].get<std::string>());
 		window.setFramerateLimit(sh["framerate_cap"].get<int>());
 
-
-
-
+	
 
 		static constexpr int obstacle_size_idk_where_to_put_atm = 20;
 
 
-		//draw bottom floor type thing
-		//dont forget to del this 
 		float darw_y_pos = window.getSize().y - obstacle_size_idk_where_to_put_atm;
 		float darw_x_pos = 0;
 
 		while (darw_x_pos - obstacle_size_idk_where_to_put_atm < window.getSize().x) {
-			vec2 compilermemes = { darw_x_pos ,darw_y_pos };
+			vec2 compilermemes = { darw_x_pos , darw_y_pos };
 			entities.AddObstacle(compilermemes);
 			darw_x_pos += obstacle_size_idk_where_to_put_atm;
 		}
-
-
-		static constexpr int platform_size = 7;
 		
-		float y_platform1_start = 100;
-		float x_platform1_start = 100;
-
-		float y_platform2_start = 200;
-		float x_platform2_start = 240;
-
-		float y_platform3_start = 300;
-		float x_platform3_start = 380;
-
-		float y_platform4_start = 400;
-		float x_platform4_start = 520;
-
-		float y_platform5_start = 500;
-		float x_platform5_start = 660;
-
-		float y_platform6_start = 600;
-		float x_platform6_start = 800;
-
-
-		for (int i = 0; i < platform_size; ++i) {
-			vec2 compilermemes = { x_platform1_start ,y_platform1_start };
-			x_platform1_start += obstacle_size_idk_where_to_put_atm;
-			entities.AddObstacle(compilermemes);
-		}
-		for (int i = 0; i < platform_size; ++i) {
-			vec2 compilermemes = { x_platform2_start ,y_platform2_start };
-			x_platform2_start += obstacle_size_idk_where_to_put_atm;
-			entities.AddObstacle(compilermemes);
-		}
-		for (int i = 0; i < platform_size; ++i) {
-			vec2 compilermemes = { x_platform3_start ,y_platform3_start };
-			x_platform3_start += obstacle_size_idk_where_to_put_atm;
-			entities.AddObstacle(compilermemes);
-		}
-		for (int i = 0; i < platform_size; ++i) {
-			vec2 compilermemes = { x_platform4_start ,y_platform4_start };
-			x_platform4_start += obstacle_size_idk_where_to_put_atm;
-			entities.AddObstacle(compilermemes);
-		}
-		for (int i = 0; i < platform_size; ++i) {
-			vec2 compilermemes = { x_platform5_start ,y_platform5_start };
-			x_platform5_start += obstacle_size_idk_where_to_put_atm;
-			entities.AddObstacle(compilermemes);
-		}
-		for (int i = 0; i < platform_size; ++i) {
-			vec2 compilermemes = { x_platform6_start ,y_platform6_start };
-			x_platform6_start += obstacle_size_idk_where_to_put_atm;
-			entities.AddObstacle(compilermemes);
-		}
 
 	}
 
@@ -150,16 +94,11 @@ public:
 		window.clear();
 
 
-		player.shape.setPosition(player.position.x, player.position.y);
-
-		
 		for (auto& each : entities.GetEntities()) {
-			
-			each->shape.setPosition(each->position.x, each->position.y);
-			window.draw(each->shape);
+			window.draw(each->GetShape());
 		}
 
-		window.draw(player.shape);
+		window.draw(player.GetShape());
 		window.display();
 	}
 
@@ -199,7 +138,7 @@ public:
 					hold_test = true;
 					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-					entities.AddBullet({ player.position }, mousePos);
+					entities.AddBullet(player.GetPosition(), mousePos);
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
@@ -227,10 +166,10 @@ public:
 	void sMovement() {
 
 		for (auto& each : entities.GetEntities()) {
-			each->position += each->velocity;
+			each->PositionUpdate();
 		}
 
-		player.velocity = { 0,0 };		//reset vel each frame
+		player.velocity = { 0,0 };
 
 		if (player.input.up) {
 			player.velocity.y -= player.speed;
@@ -244,14 +183,11 @@ public:
 		if (player.input.right) {
 			player.velocity.x += player.speed;
 		}
-
-
-
-		player.position += player.velocity;
+		player.PositionUpdate();
 	}
 
 	void sCollision() {
-
+		/*
 		for (auto& each : entities.GetEntities()) {
 
 			float size_x = each->shape.getSize().x;
@@ -277,13 +213,15 @@ public:
 			}
 
 		}
-
+		*/
 
 		for (auto& bullets : entities.GetEntities(EntityType::bullet)) {
-			for (auto& enemes : entities.GetEntities(EntityType::enemy)) {
-				if (bullets->shape.getGlobalBounds().intersects(enemes->shape.getGlobalBounds())) {
+			for (auto& enemies : entities.GetEntities(EntityType::enemy)) {
+				
+				if (bullets->isCollision(enemies->GetBoundingBox())) {
 					bullets->deactivate();
-					enemes->deactivate();
+					enemies->deactivate();
+					break;
 				}
 			}
 		}
@@ -294,11 +232,10 @@ public:
 				if (each->Type() == EntityType::obstacle) {
 					continue;
 				}
-				if (Collision::DoesCollide(*each, *obstacle)) {
-					vec2 dir = Collision::GetReflectionDot(*each, *obstacle);
-					each->velocity.dot(dir);
+				const auto& bb = obstacle->GetBoundingBox();
+				if (each->isCollision(bb)) {
+					each->CollisionReflectThis(bb);
 				}
-
 			}
 		}
 

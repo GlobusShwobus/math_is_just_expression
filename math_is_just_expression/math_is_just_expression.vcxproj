@@ -144,6 +144,7 @@
     <ClCompile Include="dump.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="strings2.cpp" />
+    <ClCompile Include="vec2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entity.h" />

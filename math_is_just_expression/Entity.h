@@ -18,14 +18,65 @@ public:
 	CInput() = default;
 };
 
-class EntityManager;//pre declare or whatever the fuck
+
+
+
+
+
 
 enum class EntityType {
 	player, enemy, bullet, obstacle, NULLTYPE
 };
+
 enum class CollisionSide {
 	left, top, right, bottom, no_overlap
 };
+
+class BoundingBox {
+public:
+	float x = 0.f;
+	float y = 0.f;
+	float width = 0.f;
+	float height = 0.f;
+	vec2 velocity = { 0,0 };
+
+	BoundingBox(const vec2& pos, const vec2& vel, const vec2& dimensions) :x(pos.x), y(pos.y), width(dimensions.x), height(dimensions.y), velocity(vel) {}
+	BoundingBox(float X, float Y, float WIDTH, float HEIGHT, const vec2& VEL) :x(X), y(Y), width(WIDTH), height(HEIGHT), velocity(VEL) {}
+	BoundingBox() = default;
+
+	BoundingBox GetBoundingBox()const {
+		return { x,y,width, height, velocity };
+	}
+
+	bool Intersects(const BoundingBox& another)const {
+
+		bool colX = x + width >= another.x && x <= another.x + another.width;
+		bool colY = y + height >= another.y && y <= another.y + another.height;
+
+		return colX && colY;
+	}
+
+	CollisionSide GetCollisionSide(const BoundingBox& another)const {
+
+		float overlap_left = x + width - another.x;
+		float overlap_right = another.x + another.width - x;
+		float overlap_top = y + height - another.y;
+		float overlap_bottom = another.y + another.height - y;
+
+
+		float minOverLap = std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
+
+		if       (minOverLap == overlap_left)  { return CollisionSide::left; }
+		else if (minOverLap == overlap_right)  { return CollisionSide::right; }
+		else if (minOverLap == overlap_top)    { return CollisionSide::top; }
+		else if (minOverLap == overlap_bottom) { return CollisionSide::bottom; }
+		else
+			return CollisionSide::no_overlap;
+	}
+
+};
+
+class EntityManager;//pre declare or whatever the fuck
 
 class Entity {
 
@@ -35,15 +86,14 @@ class Entity {
 	bool activeStatus = true;
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
+	sf::RectangleShape shape;
+	
+	BoundingBox transform;
 
 	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
 
-
-
-
 public:
 
-	sf::RectangleShape shape;
 
 	bool IsActive()const {
 		return activeStatus;
@@ -58,37 +108,44 @@ public:
 		activeStatus = false;
 	}
 
-
-	bool isCollide(const sf::FloatRect& another)const {
-		return shape.getGlobalBounds().intersects(another);
+	const vec2 GetPosition()const {
+		return { transform.x, transform.y };
 	}
-	CollisionSide GetCollisionSide(const sf::FloatRect& another)const {
-
-		float overlap_left = shape.getPosition().x + shape.getSize().x - another.left;
-		float overlap_right = another.left + another.width - shape.getPosition().x;
-
-		float overlap_top = shape.getPosition().y + shape.getSize().y - another.top;
-		float overlap_bottom = another.top + another.height - shape.getPosition().y;
-
-		float minOverLap= std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
-
-		if      (minOverLap == overlap_left)    { return CollisionSide::left;   }
-		else if (minOverLap == overlap_right)   { return CollisionSide::right;  }
-		else if (minOverLap == overlap_top)     { return CollisionSide::top;    }
-		else if (minOverLap == overlap_bottom)  { return CollisionSide::bottom; }
-
-		return CollisionSide::no_overlap;
+	
+	const BoundingBox GetBoundingBox()const {
+		return transform.GetBoundingBox();
 	}
 
+	void PositionUpdate() {
+		transform.x += transform.velocity.x;
+		transform.y += transform.velocity.y;
+		shape.setPosition(transform.x, transform.y);
+	}
+
+
+
+	void CollisionReflectThis(const BoundingBox& another) {
+
+		CollisionSide colSide = transform.GetCollisionSide(another);
+
+		vec2 norm = { 0,0 };
+
+		switch (colSide) {
+		case CollisionSide::left:     norm.x = -1; break; 
+		case CollisionSide::right:    norm.x = 1;  break; 
+		case CollisionSide::top:      norm.y = -1; break; 
+		case CollisionSide::bottom:   norm.y = 1;  break; 
+		default:                                    return; 
+		}
+		
+		float dot = transform.velocity.x * norm.x + transform.velocity.y * norm.y;
+		transform.velocity.x -= 2 * dot * norm.x;
+		transform.velocity.y -= 2 * dot * norm.y;
+	}
 	void CollisionBlockIntersection(const sf::FloatRect& another) {
 
 
 	}
-
-	vec2 CollisionReflectThis(const sf::FloatRect& another) {
-
-	}
-
 };
 
 //redefine score later to be read from JSON, basically remember the score, so don't use the  0 basically
@@ -97,7 +154,6 @@ class Player: public Entity {
 
 public:
 
-	//CScore score;
 	CInput input;
 	unsigned int speed = 0;
 
@@ -114,10 +170,9 @@ public:
 		this->shape.setFillColor({ sh["Fill_color"][0],sh["Fill_color"][1] ,sh["Fill_color"][2] });//no, fuck you.
 		this->shape.setOutlineColor({ sh["Outline_color"][0],sh["Outline_color"][1] ,sh["Outline_color"][2] });
 		this->shape.setOutlineThickness(sh["Outline_thickness"]);
+		this->shape.setPosition(pos.x, pos.y);
+
 		this->speed = sh["Base_speed"];
-		
-		this->transform.SetPosition(pos);
-		this->transform.SetSize({ shape.getSize().x, shape.getSize().y });
 	}
 
 };
@@ -286,13 +341,13 @@ public:
 		rarefrog->shape.setOutlineColor(enemyconf.out);
 		rarefrog->shape.setOutlineThickness(enemyconf.outline_thickness);
 
-		rarefrog->transform.SetPosition(POS);
-		rarefrog->transform.SetVelocity(VEL);
-		rarefrog->transform.SetSize({ enemyconf.size_x,enemyconf.size_y });
+		rarefrog->transform.position = POS;
+		rarefrog->transform.velocity = VEL;
+		rarefrog->transform.dimensions = { enemyconf.size_x,enemyconf.size_y };
 
 		add_next_frame.push_back(rarefrog);
 	}
-	void AddBullet(const vec2& origin, const sf::Vector2f& target) {
+	void AddBullet(const vec2& origin, const vec2& target) {
 
 		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::bullet));
 
@@ -307,9 +362,11 @@ public:
 		float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
 		direction /= length;
 
-		rarefrog->transform.SetPosition(origin);
-		rarefrog->transform.SetVelocity(direction * bulletconf.speed);
-		rarefrog->transform.SetSize({ bulletconf.size_x, bulletconf.size_y });
+
+		rarefrog->transform.position = origin;
+		direction *= bulletconf.speed;
+		rarefrog->transform.velocity = direction;
+		rarefrog->transform.dimensions = { bulletconf.size_x,bulletconf.size_y };
 
 		add_next_frame.push_back(rarefrog);
 	}
@@ -326,9 +383,10 @@ public:
 		rarefrog->shape.setOutlineColor(obstacleconf.out);
 		rarefrog->shape.setOutlineThickness(obstacleconf.outline_thickness);
 
-		rarefrog->transform.SetPosition(POS);
-		rarefrog->transform.SetVelocity({ obstacleconf.speed , obstacleconf.speed });
-		rarefrog->transform.SetSize({ obstacleconf.size_x, obstacleconf.size_y });
+
+		rarefrog->transform.position = POS;
+		rarefrog->transform.velocity = { obstacleconf.speed , obstacleconf.speed };
+		rarefrog->transform.dimensions = { obstacleconf.size_x,obstacleconf.size_y };
 
 		add_next_frame.push_back(rarefrog);
 	}
