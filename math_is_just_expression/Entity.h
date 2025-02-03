@@ -5,22 +5,6 @@
 
 #include "json.hpp"
 
-/*
-class CScore {
-public:
-	int score = 0;
-	CScore(int s) :score(s){}
-};
-*/
-
-
-class CLifespan {
-public:
-	int remaining = 0;
-	int total = 0;
-	CLifespan(int initial) :remaining(initial), total(initial) {}
-	CLifespan() = default;
-};
 
 class CInput {
 public:
@@ -34,32 +18,14 @@ public:
 	CInput() = default;
 };
 
-class CTransform {
-	vec2 position = { 0,0 };
-	vec2 velocity = { 0,0 };
-	vec2 size = { 0,0 };
-
-public:
-
-	CTransform() = default;
-
-	void SetPosition(const vec2& pos) {
-		position = pos;
-	}
-	void SetVelocity(const vec2& vel) {
-		velocity = vel;
-	}
-	void SetSize(const vec2& ezis) {
-		size = ezis;
-	}
-};
-
 class EntityManager;//pre declare or whatever the fuck
 
 enum class EntityType {
 	player, enemy, bullet, obstacle, NULLTYPE
 };
-
+enum class CollisionSide {
+	left, top, right, bottom, no_overlap
+};
 
 class Entity {
 
@@ -70,14 +36,14 @@ class Entity {
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
 
-
 	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
+
+
+
 
 public:
 
 	sf::RectangleShape shape;
-	CLifespan     lifepoints;
-	CTransform transform;
 
 	bool IsActive()const {
 		return activeStatus;
@@ -92,8 +58,35 @@ public:
 		activeStatus = false;
 	}
 
-	sf::FloatRect GetBoundingBox()const {
-		return shape.getGlobalBounds();
+
+	bool isCollide(const sf::FloatRect& another)const {
+		return shape.getGlobalBounds().intersects(another);
+	}
+	CollisionSide GetCollisionSide(const sf::FloatRect& another)const {
+
+		float overlap_left = shape.getPosition().x + shape.getSize().x - another.left;
+		float overlap_right = another.left + another.width - shape.getPosition().x;
+
+		float overlap_top = shape.getPosition().y + shape.getSize().y - another.top;
+		float overlap_bottom = another.top + another.height - shape.getPosition().y;
+
+		float minOverLap= std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
+
+		if      (minOverLap == overlap_left)    { return CollisionSide::left;   }
+		else if (minOverLap == overlap_right)   { return CollisionSide::right;  }
+		else if (minOverLap == overlap_top)     { return CollisionSide::top;    }
+		else if (minOverLap == overlap_bottom)  { return CollisionSide::bottom; }
+
+		return CollisionSide::no_overlap;
+	}
+
+	void CollisionBlockIntersection(const sf::FloatRect& another) {
+
+
+	}
+
+	vec2 CollisionReflectThis(const sf::FloatRect& another) {
+
 	}
 
 };
