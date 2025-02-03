@@ -41,13 +41,39 @@ public:
 		float darw_y_pos = window.getSize().y - obstacle_size_idk_where_to_put_atm;
 		float darw_x_pos = 0;
 
+		//bottom
 		while (darw_x_pos - obstacle_size_idk_where_to_put_atm < window.getSize().x) {
 			vec2 compilermemes = { darw_x_pos , darw_y_pos };
 			entities.AddObstacle(compilermemes);
 			darw_x_pos += obstacle_size_idk_where_to_put_atm;
 		}
 		
+		//top
+		darw_y_pos = 0;
+		darw_x_pos = 0;
+		while (darw_x_pos - obstacle_size_idk_where_to_put_atm < window.getSize().x) {
+			vec2 compilermemes = { darw_x_pos, darw_y_pos };
+			entities.AddObstacle(compilermemes);
+			darw_x_pos += obstacle_size_idk_where_to_put_atm;
+		}
 
+		//left
+		darw_x_pos = 0;
+		darw_y_pos = 0;
+		while (darw_y_pos - obstacle_size_idk_where_to_put_atm < window.getSize().y) {
+			vec2 compilermemes = { darw_x_pos, darw_y_pos };
+			entities.AddObstacle(compilermemes);
+			darw_y_pos += obstacle_size_idk_where_to_put_atm;
+		}
+
+		//right
+		darw_x_pos = window.getSize().x - obstacle_size_idk_where_to_put_atm;
+		darw_y_pos = 0;
+		while (darw_y_pos - obstacle_size_idk_where_to_put_atm < window.getSize().y) {
+			vec2 compilermemes = { darw_x_pos, darw_y_pos };
+			entities.AddObstacle(compilermemes);
+			darw_y_pos += obstacle_size_idk_where_to_put_atm;
+		}
 	}
 
 
@@ -134,16 +160,19 @@ public:
 			static bool hold_test = false;
 			if (sfevent.type == sf::Event::MouseButtonPressed || hold_test) {
 				if (sfevent.key.code == sf::Mouse::Left || hold_test) {
-					player.input.shoot = true;
+				
 					hold_test = true;
 					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
 					entities.AddBullet(player.GetPosition(), { mousePos.x, mousePos.y });
+
+					//player.input.shoot = true; damn guide is shit, ima do it my way
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
 				if (sfevent.key.code == sf::Mouse::Right) {
-					player.input.shield = true;
+					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+					entities.AddStickyBomb(player.GetPosition(), { mousePos.x, mousePos.y });
+					//player.input.shield = true;
 					//also spawn bullet here
 					//handle spawning shield somewhere
 				}
@@ -188,33 +217,6 @@ public:
 	}
 
 	void sCollision() {
-		/*
-		for (auto& each : entities.GetEntities()) {
-
-			float size_x = each->shape.getSize().x;
-			float size_y = each->shape.getSize().y;
-
-			//for left and right edges
-			if (each->position.x < 0) {
-				each->position.x = 0;
-				each->velocity.x *= -1;
-			}
-			else if (each->position.x + size_x > window.getSize().x) {
-				each->position.x = window.getSize().x - size_x;
-				each->velocity.x *= -1;
-			}
-			//for up and down edges
-			if (each->position.y < 0) {
-				each->position.y = 0;
-				each->velocity.y *= -1;
-			}
-			else if (each->position.y + size_y > window.getSize().y) {
-				each->position.y = window.getSize().y - size_y;
-				each->velocity.y *= -1;
-			}
-
-		}
-		*/
 
 		for (auto& bullets : entities.GetEntities(EntityType::bullet)) {
 			for (auto& enemies : entities.GetEntities(EntityType::enemy)) {
@@ -229,12 +231,33 @@ public:
 			}
 		}
 
+		for (auto& sticky : entities.GetEntities(EntityType::stickybomb)) {
+			for (auto& stickable : entities.GetEntities()) {
+
+
+				if (stickable->Type() != EntityType::obstacle && stickable->Type() != EntityType::stickybomb) {
+					continue;
+				}
+
+				auto& stickyBB = sticky->GetBoundingBox();
+				auto& anotherStickyBB = stickable->GetBoundingBox();
+
+
+
+				if (anotherStickyBB.Intersects(stickyBB)) {
+					sticky->SetPosition(Collision::BlockFurtherMove(stickyBB, anotherStickyBB));
+					sticky->SetVelocity({ 0,0 });
+				}
+			}
+		}
+		
 		for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
 			for (auto& each : entities.GetEntities()) {
 
 				if (each->Type() == EntityType::obstacle) {
 					continue;
 				}
+
 				auto& obstacleBB = obstacle->GetBoundingBox();
 				auto& eachBB = each->GetBoundingBox();
 
@@ -243,9 +266,7 @@ public:
 				}
 			}
 		}
-
+		
 
 	}
-
-
 };

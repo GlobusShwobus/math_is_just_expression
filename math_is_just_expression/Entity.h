@@ -6,7 +6,7 @@
 #include "json.hpp"
 
 enum class EntityType {
-	player, enemy, bullet, obstacle, NULLTYPE
+	player, enemy, bullet, obstacle, stickybomb, NULLTYPE
 };
 
 
@@ -60,10 +60,12 @@ public:
 	void SetVelocity(const vec2& vel) {
 		transform.velocity = vel;
 	}
+	void SetPosition(const vec2& pos) {
+		transform.x = pos.x;
+		transform.y = pos.y;
+	}
 };
 
-
-//redefine score later to be read from JSON, basically remember the score, so don't use the  0 basically
 
 class Player: public Entity {
 
@@ -92,34 +94,14 @@ public:
 
 };
 
-struct EnemyConf {
+struct BasicConf {
 	float size_x = 0;
 	float size_y = 0;
 	sf::Color fill;
 	sf::Color out;
 	int outline_thickness = 0;
 	float speed = 0.f;
-	int lifepoints = 0;
 };
-struct BulletConf {
-	float size_x = 0;
-	float size_y = 0;
-	sf::Color fill;
-	sf::Color out;
-	int outline_thickness = 0;
-	float speed = 0.f;
-	int lifepoints = 0;
-};
-struct ObstacleConf {
-	float size_x = 0;
-	float size_y = 0;
-	sf::Color fill;
-	sf::Color out;
-	int outline_thickness = 0;
-	float speed = 0.f;
-	int lifepoints = 0;
-};
-
 
 class EntityManager {
 
@@ -129,98 +111,19 @@ class EntityManager {
 	
 	size_t total_entities = 0;
 
-	EnemyConf enemyconf;
-	BulletConf bulletconf;
-	ObstacleConf obstacleconf;
+	BasicConf enemyconf;
+	BasicConf bulletconf;
+	BasicConf obstacleconf;
+	BasicConf stickyconf;
 
 
 	vec2 window_size = { 0,0 };
 
-	void InitLocalConfig(const nlohmann::json& config) {
-		try {
-			auto& sh = config["Entities"];
+	void InitLocalConfig(const nlohmann::json& config);
 
-			//basic enemy
-			enemyconf.size_x = sh["Enemy"]["size_x"];
-			enemyconf.size_y = sh["Enemy"]["size_y"];
-			enemyconf.fill = sf::Color{ sh["Enemy"]["Fill_color"][0],sh["Enemy"]["Fill_color"][1] ,sh["Enemy"]["Fill_color"][2] };
-			enemyconf.out = sf::Color{ sh["Enemy"]["Outline_color"][0],sh["Enemy"]["Outline_color"][1] ,sh["Enemy"]["Outline_color"][2] };
-			enemyconf.outline_thickness = sh["Enemy"]["Outline_thickness"];
-			enemyconf.speed = sh["Enemy"]["Base_speed"];
-			enemyconf.lifepoints = sh["Enemy"]["Lifepoints"];
+	bool PosIsFree(vec2& pos)const;
 
-			//basic bullet
-			bulletconf.size_x = sh["Bullet"]["size_x"];
-			bulletconf.size_y = sh["Bullet"]["size_y"];
-			bulletconf.fill = sf::Color{ sh["Bullet"]["Fill_color"][0],sh["Bullet"]["Fill_color"][1] ,sh["Bullet"]["Fill_color"][2] };
-			bulletconf.out = sf::Color{ sh["Bullet"]["Outline_color"][0],sh["Bullet"]["Outline_color"][1] ,sh["Bullet"]["Outline_color"][2] };
-			bulletconf.outline_thickness = sh["Bullet"]["Outline_thickness"];
-			bulletconf.speed = sh["Bullet"]["Base_speed"];
-			bulletconf.lifepoints = sh["Bullet"]["Lifepoints"];
-
-			//obstacle
-			obstacleconf.size_x = sh["Obstacle"]["size_x"];
-			obstacleconf.size_y = sh["Obstacle"]["size_y"];
-			obstacleconf.fill = sf::Color{ sh["Obstacle"]["Fill_color"][0],sh["Obstacle"]["Fill_color"][1] ,sh["Obstacle"]["Fill_color"][2] };
-			obstacleconf.out = sf::Color{ sh["Obstacle"]["Outline_color"][0],sh["Obstacle"]["Outline_color"][1] ,sh["Obstacle"]["Outline_color"][2] };
-			obstacleconf.outline_thickness = sh["Obstacle"]["Outline_thickness"];
-			obstacleconf.speed = sh["Obstacle"]["Base_speed"];
-			obstacleconf.lifepoints = sh["Obstacle"]["Lifepoints"];
-
-			window_size = { config["Window"]["width"], config["Window"]["height"] };
-		}
-		catch (const std::exception&e) {
-			printf("\n%s", e.what());
-		}
-	}
-
-	bool PosIsFree(vec2& pos) {
-
-		while (true) {
-			bool isFree = true;
-
-			for (const auto& each : all) {
-				const sf::FloatRect& bounds = each->shape.getGlobalBounds();
-
-				if (bounds.contains(pos.x, pos.y)) {
-
-					isFree = false;
-
-					pos.x = bounds.left + bounds.width;
-
-
-					if (pos.x >= window_size.x) {
-						pos.x = 0; 
-						pos.y += bounds.height;
-					}
-
-					if (pos.y >= window_size.y) {
-						return false;
-					}
-					break;
-				}
-			}
-
-			if (isFree) {
-				return true;
-			}
-		}
-	}
-
-	void RemoveInactive() {
-
-		all.erase(std::remove_if(all.begin(), all.end(), [&](std::shared_ptr<Entity>& ent) {
-			return !ent->IsActive();
-			}), all.end());
-
-
-		for (auto& pair : per_type) {
-			auto& it = pair.second;
-			it.erase(std::remove_if(it.begin(), it.end(), [&](std::shared_ptr<Entity>& ent) {
-				return !ent->IsActive();
-				}), it.end());
-		}
-	}
+	void RemoveInactive();
 
 public:
 
@@ -228,83 +131,20 @@ public:
 		InitLocalConfig(CONFIG);
 	}
 
-	void Update() {
-		//avoids iterator invalidation?
+	void Update();
 
-
-		for (std::shared_ptr<Entity>& ent : add_next_frame) {
-			all.push_back(ent);
-			per_type[ent->Type()].push_back(ent);
-		}
-
-		add_next_frame.clear();
-		RemoveInactive();
-		printf("ent size: %d\n", (int)all.size());
-	}
-
-	void AddEnemy(vec2& POS, const vec2& VEL) {
-
-		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::enemy));
-
-		if (!PosIsFree(POS)) {
-			printf("\nEntity outside window bounds");
-			return;
-		}
-
-		rarefrog->shape.setSize({ enemyconf.size_x,enemyconf.size_y });
-		rarefrog->shape.setFillColor(enemyconf.fill);
-		rarefrog->shape.setOutlineColor(enemyconf.out);
-		rarefrog->shape.setOutlineThickness(enemyconf.outline_thickness);
-
-		rarefrog->transform = { POS,VEL, {enemyconf.size_x,enemyconf.size_y} };
-
-		add_next_frame.push_back(rarefrog);
-	}
-	void AddBullet(const vec2& origin, const vec2& target) {
-
-		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::bullet));
-
-
-		rarefrog->shape.setSize({ bulletconf.size_x,bulletconf.size_y });
-		rarefrog->shape.setFillColor(bulletconf.fill);
-		rarefrog->shape.setOutlineColor(bulletconf.out);
-		rarefrog->shape.setOutlineThickness(bulletconf.outline_thickness);
-
-		vec2 direction = { target.x - origin.x, target.y - origin.y };
-
-		float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-		direction /= length;
-
-
-		direction *= bulletconf.speed;
-
-		rarefrog->transform = { origin ,direction ,{ bulletconf.size_x,bulletconf.size_y } };
-
-		add_next_frame.push_back(rarefrog);
-	}
-	void AddObstacle(vec2& POS) {
-		auto rarefrog = std::shared_ptr<Entity>(new Entity(total_entities++, EntityType::obstacle));
-
-		if (!PosIsFree(POS)) {
-			printf("\nEntity outside window bounds");
-			return;
-		}
-
-		rarefrog->shape.setSize({ obstacleconf.size_x,obstacleconf.size_y });
-		rarefrog->shape.setFillColor(obstacleconf.fill);
-		rarefrog->shape.setOutlineColor(obstacleconf.out);
-		rarefrog->shape.setOutlineThickness(obstacleconf.outline_thickness);
-
-
-		rarefrog->transform = { POS,  {0,0},{ obstacleconf.size_x,obstacleconf.size_y } };
-
-		add_next_frame.push_back(rarefrog);
-	}
+	void AddEnemy(vec2& POS, const vec2& VEL);
+	void AddBullet(const vec2& origin, const vec2& target);
+	void AddStickyBomb(const vec2& origin, const vec2& target);
+	void AddObstacle(vec2& POS);
 
 	const std::vector<std::shared_ptr<Entity>>& GetEntities()const {
 		return all;
 	}
 	const std::vector<std::shared_ptr<Entity>>& GetEntities(const EntityType t) {
 		return per_type[t];
+	}
+	const std::map<EntityType, std::vector<std::shared_ptr<Entity>>>& GetEntitiesMap()const {
+		return per_type;
 	}
 };

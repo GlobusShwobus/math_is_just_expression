@@ -97,19 +97,13 @@ public:
 	BoundingBox& GetBoundingBox();
 	bool Intersects(const BoundingBox& another)const;
 	CollisionSide GetCollisionSide(const BoundingBox& another)const;
-
 };
 
 namespace Collision {
 
 	vec2 ReflectVelocity(const BoundingBox& reflected, const BoundingBox& from);
+	vec2 BlockFurtherMove(const BoundingBox& guilty, const BoundingBox& another);
 
-	/*
-	void CollisionBlockIntersection(const BoundingBox& another) {
-
-
-	}
-	*/
 }
 
 class CInput {

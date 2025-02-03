@@ -14,8 +14,7 @@
 			"Fill_color": [ 255, 0, 0 ],
 			"Outline_color": [ 255, 0, 0 ],
 			"Outline_thickness": 0,
-			"Base_speed": 2,
-			"Lifepoints": 100
+			"Base_speed": 2
 		},
 		"Bullet": {
 			"size_x": 5,
@@ -23,17 +22,23 @@
 			"Fill_color": [ 0, 0, 255 ],
 			"Outline_color": [ 0, 0, 255 ],
 			"Outline_thickness": 0,
-			"Base_speed": 5,
-			"Lifepoints": 50
+			"Base_speed": 5
 		},
 		"Obstacle": {
 			"size_x": 20,
 			"size_y": 20,
-			"Fill_color": [ 255, 105 ,180 ],
+			"Fill_color": [ 255, 105, 180 ],
 			"Outline_color": [ 255, 105, 180 ],
 			"Outline_thickness": 0,
-			"Base_speed": 0,
-			"Lifepoints": 10000
+			"Base_speed": 0
+		},
+		"StickyBomb": {
+			"size_x": 16,
+			"size_y": 16,
+			"Fill_color": [ 173, 216, 230 ],
+			"Outline_color": [ 255, 0, 0 ],
+			"Outline_thickness": 2,
+			"Base_speed": 8
 		}
 	},
 	"Window": {

@@ -27,7 +27,7 @@ BoundingBox& BoundingBox::GetBoundingBox() {
 	return *this;
 }
 
-bool  BoundingBox::Intersects(const BoundingBox& another)const {
+bool BoundingBox::Intersects(const BoundingBox& another)const {
 
 	bool colX = x + width >= another.x && x <= another.x + another.width;
 	bool colY = y + height >= another.y && y <= another.y + another.height;
@@ -71,7 +71,30 @@ vec2 Collision::ReflectVelocity(const BoundingBox& reflected, const BoundingBox&
 
 	return{ reflected.velocity.x - (2 * dot * norm.x),reflected.velocity.y - (2 * dot * norm.y) };
 }
+vec2 Collision::BlockFurtherMove(const BoundingBox& guilty, const BoundingBox& another) {
 
+	CollisionSide colSide = guilty.GetCollisionSide(another);
+
+	vec2 block = { guilty.x, guilty.y };
+
+	switch (colSide) {
+	case CollisionSide::left:
+		block.x = another.x - guilty.width;
+		break;
+	case CollisionSide::right:
+		block.x = another.x + another.width;
+		break;
+	case CollisionSide::top:
+		block.y = another.y - guilty.height;
+		break;
+	case CollisionSide::bottom:
+		block.y = another.y + another.height;
+		break;
+	default:
+		break;
+	}
+	return block;
+}
 
 
 
