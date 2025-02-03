@@ -138,7 +138,7 @@ public:
 					hold_test = true;
 					sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-					entities.AddBullet(player.GetPosition(), mousePos);
+					entities.AddBullet(player.GetPosition(), { mousePos.x, mousePos.y });
 					//also spawn bullet here
 					//handle spawning bullet somewhere
 				}
@@ -166,24 +166,25 @@ public:
 	void sMovement() {
 
 		for (auto& each : entities.GetEntities()) {
-			each->PositionUpdate();
+			each->UpdatePosition();
 		}
 
-		player.velocity = { 0,0 };
+		vec2 player_vec = { 0,0 };
 
 		if (player.input.up) {
-			player.velocity.y -= player.speed;
+			player_vec.y -= player.speed;
 		}
 		if (player.input.left) {
-			player.velocity.x -= player.speed;
+			player_vec.x -= player.speed;
 		}
 		if (player.input.down) {
-			player.velocity.y += player.speed;
+			player_vec.y += player.speed;
 		}
 		if (player.input.right) {
-			player.velocity.x += player.speed;
+			player_vec.x += player.speed;
 		}
-		player.PositionUpdate();
+		player.SetVelocity(player_vec);
+		player.UpdatePosition();
 	}
 
 	void sCollision() {
@@ -218,10 +219,12 @@ public:
 		for (auto& bullets : entities.GetEntities(EntityType::bullet)) {
 			for (auto& enemies : entities.GetEntities(EntityType::enemy)) {
 				
-				if (bullets->isCollision(enemies->GetBoundingBox())) {
+				const auto& bulletsBB = bullets->GetBoundingBox();
+				const auto& enemiesBB = enemies->GetBoundingBox();
+
+				if (bulletsBB.Intersects(enemiesBB)) {
 					bullets->deactivate();
 					enemies->deactivate();
-					break;
 				}
 			}
 		}
@@ -232,9 +235,11 @@ public:
 				if (each->Type() == EntityType::obstacle) {
 					continue;
 				}
-				const auto& bb = obstacle->GetBoundingBox();
-				if (each->isCollision(bb)) {
-					each->CollisionReflectThis(bb);
+				auto& obstacleBB = obstacle->GetBoundingBox();
+				auto& eachBB = each->GetBoundingBox();
+
+				if (eachBB.Intersects(obstacleBB)) {
+					eachBB.velocity = Collision::ReflectVelocity(eachBB, obstacleBB);
 				}
 			}
 		}

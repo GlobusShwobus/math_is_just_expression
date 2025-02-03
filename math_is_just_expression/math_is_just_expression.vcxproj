@@ -141,16 +141,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="dump.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="strings2.cpp" />
-    <ClCompile Include="vec2.cpp" />
+    <ClCompile Include="Components.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="strings2.h" />
-    <ClInclude Include="vec2.h" />
+    <ClInclude Include="Components.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

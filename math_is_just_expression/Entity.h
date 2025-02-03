@@ -1,80 +1,14 @@
 #pragma once
 
-#include "vec2.h"
+#include "Components.h"
 #include <SFML/Graphics.hpp>
 
 #include "json.hpp"
-
-
-class CInput {
-public:
-	bool up = false;
-	bool left = false;
-	bool right = false;
-	bool down = false;
-	bool shield = false;
-	bool shoot = false;
-
-	CInput() = default;
-};
-
-
-
-
-
-
 
 enum class EntityType {
 	player, enemy, bullet, obstacle, NULLTYPE
 };
 
-enum class CollisionSide {
-	left, top, right, bottom, no_overlap
-};
-
-class BoundingBox {
-public:
-	float x = 0.f;
-	float y = 0.f;
-	float width = 0.f;
-	float height = 0.f;
-	vec2 velocity = { 0,0 };
-
-	BoundingBox(const vec2& pos, const vec2& vel, const vec2& dimensions) :x(pos.x), y(pos.y), width(dimensions.x), height(dimensions.y), velocity(vel) {}
-	BoundingBox(float X, float Y, float WIDTH, float HEIGHT, const vec2& VEL) :x(X), y(Y), width(WIDTH), height(HEIGHT), velocity(VEL) {}
-	BoundingBox() = default;
-
-	BoundingBox GetBoundingBox()const {
-		return { x,y,width, height, velocity };
-	}
-
-	bool Intersects(const BoundingBox& another)const {
-
-		bool colX = x + width >= another.x && x <= another.x + another.width;
-		bool colY = y + height >= another.y && y <= another.y + another.height;
-
-		return colX && colY;
-	}
-
-	CollisionSide GetCollisionSide(const BoundingBox& another)const {
-
-		float overlap_left = x + width - another.x;
-		float overlap_right = another.x + another.width - x;
-		float overlap_top = y + height - another.y;
-		float overlap_bottom = another.y + another.height - y;
-
-
-		float minOverLap = std::min({ overlap_left ,overlap_right ,overlap_top ,overlap_bottom });
-
-		if       (minOverLap == overlap_left)  { return CollisionSide::left; }
-		else if (minOverLap == overlap_right)  { return CollisionSide::right; }
-		else if (minOverLap == overlap_top)    { return CollisionSide::top; }
-		else if (minOverLap == overlap_bottom) { return CollisionSide::bottom; }
-		else
-			return CollisionSide::no_overlap;
-	}
-
-};
 
 class EntityManager;//pre declare or whatever the fuck
 
@@ -82,18 +16,19 @@ class Entity {
 
 	friend class Player;
 	friend class EntityManager;
+	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
+
+
+private:
 
 	bool activeStatus = true;
 	size_t id = 0;
 	EntityType type = EntityType::NULLTYPE;
+
 	sf::RectangleShape shape;
-	
 	BoundingBox transform;
 
-	Entity(const size_t ID, const EntityType t) :id(ID), type(t) {}
-
 public:
-
 
 	bool IsActive()const {
 		return activeStatus;
@@ -111,42 +46,22 @@ public:
 	const vec2 GetPosition()const {
 		return { transform.x, transform.y };
 	}
-	
-	const BoundingBox GetBoundingBox()const {
+	BoundingBox& GetBoundingBox() {
 		return transform.GetBoundingBox();
 	}
-
-	void PositionUpdate() {
+	const sf::RectangleShape& GetShape()const {
+		return shape;
+	}
+	void UpdatePosition() {
 		transform.x += transform.velocity.x;
 		transform.y += transform.velocity.y;
 		shape.setPosition(transform.x, transform.y);
 	}
-
-
-
-	void CollisionReflectThis(const BoundingBox& another) {
-
-		CollisionSide colSide = transform.GetCollisionSide(another);
-
-		vec2 norm = { 0,0 };
-
-		switch (colSide) {
-		case CollisionSide::left:     norm.x = -1; break; 
-		case CollisionSide::right:    norm.x = 1;  break; 
-		case CollisionSide::top:      norm.y = -1; break; 
-		case CollisionSide::bottom:   norm.y = 1;  break; 
-		default:                                    return; 
-		}
-		
-		float dot = transform.velocity.x * norm.x + transform.velocity.y * norm.y;
-		transform.velocity.x -= 2 * dot * norm.x;
-		transform.velocity.y -= 2 * dot * norm.y;
-	}
-	void CollisionBlockIntersection(const sf::FloatRect& another) {
-
-
+	void SetVelocity(const vec2& vel) {
+		transform.velocity = vel;
 	}
 };
+
 
 //redefine score later to be read from JSON, basically remember the score, so don't use the  0 basically
 
@@ -341,9 +256,7 @@ public:
 		rarefrog->shape.setOutlineColor(enemyconf.out);
 		rarefrog->shape.setOutlineThickness(enemyconf.outline_thickness);
 
-		rarefrog->transform.position = POS;
-		rarefrog->transform.velocity = VEL;
-		rarefrog->transform.dimensions = { enemyconf.size_x,enemyconf.size_y };
+		rarefrog->transform = { POS,VEL, {enemyconf.size_x,enemyconf.size_y} };
 
 		add_next_frame.push_back(rarefrog);
 	}
@@ -363,10 +276,9 @@ public:
 		direction /= length;
 
 
-		rarefrog->transform.position = origin;
 		direction *= bulletconf.speed;
-		rarefrog->transform.velocity = direction;
-		rarefrog->transform.dimensions = { bulletconf.size_x,bulletconf.size_y };
+
+		rarefrog->transform = { origin ,direction ,{ bulletconf.size_x,bulletconf.size_y } };
 
 		add_next_frame.push_back(rarefrog);
 	}
@@ -384,9 +296,7 @@ public:
 		rarefrog->shape.setOutlineThickness(obstacleconf.outline_thickness);
 
 
-		rarefrog->transform.position = POS;
-		rarefrog->transform.velocity = { obstacleconf.speed , obstacleconf.speed };
-		rarefrog->transform.dimensions = { obstacleconf.size_x,obstacleconf.size_y };
+		rarefrog->transform = { POS,  {0,0},{ obstacleconf.size_x,obstacleconf.size_y } };
 
 		add_next_frame.push_back(rarefrog);
 	}

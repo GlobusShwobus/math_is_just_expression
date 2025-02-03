@@ -6,7 +6,6 @@
 
 #define PI 3.14159265
 
-
 class vec2 {
 public:
 
@@ -63,8 +62,6 @@ public:
 	vec2 Normalized()const;
 };
 
-
-
 namespace line {
 	
 	struct line {
@@ -79,3 +76,50 @@ namespace line {
 	vec2 Intersection(const line& line1, const line& line2);
 	float Sqrt(const float num);
 }
+
+
+enum class CollisionSide {
+	left, top, right, bottom, no_overlap
+};
+
+class BoundingBox {
+public:
+	float x = 0.f;
+	float y = 0.f;
+	float width = 0.f;
+	float height = 0.f;
+	vec2 velocity = { 0,0 };
+
+	BoundingBox(const vec2& pos, const vec2& vel, const vec2& dimensions) :x(pos.x), y(pos.y), width(dimensions.x), height(dimensions.y), velocity(vel) {}
+	BoundingBox(float X, float Y, float WIDTH, float HEIGHT, const vec2& VEL) :x(X), y(Y), width(WIDTH), height(HEIGHT), velocity(VEL) {}
+	BoundingBox() = default;
+
+	BoundingBox& GetBoundingBox();
+	bool Intersects(const BoundingBox& another)const;
+	CollisionSide GetCollisionSide(const BoundingBox& another)const;
+
+};
+
+namespace Collision {
+
+	vec2 ReflectVelocity(const BoundingBox& reflected, const BoundingBox& from);
+
+	/*
+	void CollisionBlockIntersection(const BoundingBox& another) {
+
+
+	}
+	*/
+}
+
+class CInput {
+public:
+	bool up = false;
+	bool left = false;
+	bool right = false;
+	bool down = false;
+	bool shield = false;
+	bool shoot = false;
+
+	CInput() = default;
+};
