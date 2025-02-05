@@ -267,8 +267,29 @@ public:
 	    //////////////////////////////////////////
 
 
+		// NEED A CUSTOM MAP WITH INT ENUM BIT MANIPULATION BULLSHIT
+		for (auto& each : entities.GetEntities()) {
+
+			auto& eachBB = each->GetBoundingBox();
+
+			for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
+				auto& obstacleBB = obstacle->GetBoundingBox();
+				if (eachBB.Intersects(obstacleBB)) {
+					eachBB.velocity = Collision::ReflectVelocity(eachBB, obstacleBB);
+				}
+			}
 
 
+			for (auto& stickables : entities.GetEntities(EntityType::stickyAttached)) {
+				auto& stickablesBB = stickables->GetBoundingBox();
+				if (eachBB.Intersects(stickablesBB)) {
+					eachBB.velocity = Collision::ReflectVelocity(eachBB, stickablesBB);
+				}
+			}
+
+		}
+
+		/*
 		for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
 			for (auto& each : entities.GetEntities()) {
 
@@ -284,7 +305,7 @@ public:
 				}
 			}
 		}
-		
+		*/
 
 	}
 };

@@ -150,6 +150,13 @@ public:
 	}
 
 
+	const std::map<EntityType, std::vector<std::shared_ptr<Entity>>>& GetCustomMap()const {
+
+
+
+	}
+
+
 	void ResteatType(int entity_id, const EntityType current_type, const EntityType change_to) {
 
 		for (auto& [key, val] : per_type) {
