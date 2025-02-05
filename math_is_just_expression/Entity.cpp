@@ -46,15 +46,14 @@ void EntityManager::InitLocalConfig(const nlohmann::json& config) {
 void EntityManager::RemoveInactive() {
 
 	all.erase(std::remove_if(all.begin(), all.end(), [&](std::shared_ptr<Entity>& ent) {
-		return !ent->IsActive();
+		return !ent->IsActive() || ent == nullptr;
 		}), all.end());
 
 
-	for (auto& pair : per_type) {
-		auto& it = pair.second;
-		it.erase(std::remove_if(it.begin(), it.end(), [&](std::shared_ptr<Entity>& ent) {
-			return !ent->IsActive();
-			}), it.end());
+	for (auto& [key, val] : per_type) {
+		val.erase(std::remove_if(val.begin(), val.end(), [&](std::shared_ptr<Entity>& ent) {
+			return !ent->IsActive() || ent == nullptr;
+			}), val.end());
 	}
 }
 void EntityManager::Update() {
@@ -127,7 +126,8 @@ void EntityManager::AddStickyBomb(const vec2& origin, const vec2& target) {
 
 	direction *= stickyconf.speed;
 
-	rarefrog->transform = { origin ,direction ,{ stickyconf.size_x, stickyconf.size_y } };
+	//the size is probably wrong because of outline thickness
+	rarefrog->transform = { origin ,direction ,{ stickyconf.size_x , stickyconf.size_y } };
 
 	add_next_frame.push_back(rarefrog);
 }

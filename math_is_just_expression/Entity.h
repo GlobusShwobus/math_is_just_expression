@@ -6,7 +6,7 @@
 #include "json.hpp"
 
 enum class EntityType {
-	player, enemy, bullet, obstacle, stickybomb, NULLTYPE
+	player, enemy, bullet, obstacle, stickybomb, stickyAttached, NULLTYPE
 };
 
 
@@ -108,6 +108,7 @@ class EntityManager {
 	std::vector<std::shared_ptr<Entity>> add_next_frame;
 	std::vector<std::shared_ptr<Entity>> all;
 	std::map<EntityType, std::vector<std::shared_ptr<Entity>>> per_type;
+
 	
 	size_t total_entities = 0;
 
@@ -146,5 +147,27 @@ public:
 	}
 	const std::map<EntityType, std::vector<std::shared_ptr<Entity>>>& GetEntitiesMap()const {
 		return per_type;
+	}
+
+
+	void ResteatType(int entity_id, const EntityType current_type, const EntityType change_to) {
+
+		for (auto& [key, val] : per_type) {
+			if (key != current_type) {
+				continue;
+			}
+
+			auto it = std::remove_if(val.begin(), val.end(), [&](std::shared_ptr<Entity>& each) {
+				if (each->ID() == entity_id) {
+					each->type = change_to;
+					per_type[change_to].push_back(std::move(each));
+					return true;
+				}
+				return false;
+				});
+
+			val.erase(it, val.end());
+		}
+
 	}
 };

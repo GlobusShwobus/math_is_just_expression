@@ -230,12 +230,16 @@ public:
 				}
 			}
 		}
+		//////////////////////////////////////////
+		// STICKY BOMB CODE
+
+		std::vector<int> toChange;
 
 		for (auto& sticky : entities.GetEntities(EntityType::stickybomb)) {
 			for (auto& stickable : entities.GetEntities()) {
 
 
-				if (stickable->Type() != EntityType::obstacle && stickable->Type() != EntityType::stickybomb) {
+				if (stickable->Type() != EntityType::obstacle && stickable->Type() != EntityType::stickyAttached) {
 					continue;
 				}
 
@@ -247,10 +251,24 @@ public:
 				if (anotherStickyBB.Intersects(stickyBB)) {
 					sticky->SetPosition(Collision::BlockFurtherMove(stickyBB, anotherStickyBB));
 					sticky->SetVelocity({ 0,0 });
+
+
+					toChange.push_back(sticky->ID());
+					//entities.ResteatType(sticky->ID(), sticky->Type(), EntityType::stickyAttached); //iterator invalidation
 				}
 			}
 		}
-		
+
+		for (int id : toChange) {
+			entities.ResteatType(id, EntityType::stickybomb, EntityType::stickyAttached);
+		}
+
+		// STICKY BOMB CODE
+	    //////////////////////////////////////////
+
+
+
+
 		for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
 			for (auto& each : entities.GetEntities()) {
 
