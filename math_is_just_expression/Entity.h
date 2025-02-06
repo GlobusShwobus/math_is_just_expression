@@ -4,11 +4,11 @@
 #include <SFML/Graphics.hpp>
 
 #include "json.hpp"
+#include <set>
 
 enum class EntityType {
 	player, enemy, bullet, obstacle, stickybomb, stickyAttached, NULLTYPE
 };
-
 
 class EntityManager;//pre declare or whatever the fuck
 
@@ -149,11 +149,30 @@ public:
 		return per_type;
 	}
 
+	//think it works, did not test beyond taking a look and it looking like cancer
+	const std::map<EntityType, std::vector<const Entity* const>> GetCustomMap(const std::set<EntityType>& listoftypes)const {
 
-	const std::map<EntityType, std::vector<std::shared_ptr<Entity>>>& GetCustomMap()const {
+		std::map<EntityType, std::vector<const Entity* const>> custom;
 
+		for (EntityType type : listoftypes) {
 
+			for (auto& [key, val] : per_type) {
 
+				if (key == type) {
+
+					for (const std::shared_ptr<Entity>& each : val) {
+
+						custom[key].push_back(each.get());
+
+					}
+
+				}
+
+			}
+
+		}
+
+		return custom;
 	}
 
 

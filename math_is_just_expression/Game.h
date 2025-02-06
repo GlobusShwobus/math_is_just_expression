@@ -289,23 +289,6 @@ public:
 
 		}
 
-		/*
-		for (auto& obstacle : entities.GetEntities(EntityType::obstacle)) {
-			for (auto& each : entities.GetEntities()) {
-
-				if (each->Type() == EntityType::obstacle) {
-					continue;
-				}
-
-				auto& obstacleBB = obstacle->GetBoundingBox();
-				auto& eachBB = each->GetBoundingBox();
-
-				if (eachBB.Intersects(obstacleBB)) {
-					eachBB.velocity = Collision::ReflectVelocity(eachBB, obstacleBB);
-				}
-			}
-		}
-		*/
 
 	}
 };
