@@ -2,39 +2,51 @@
 
 #include "Game.h"
 #include <fstream>
-
-
+#include <conio.h>
 /*
-finish up basic skeleton code first, leaning towards no random spawns, collision and bullet spawning mainly needs a look
+std::ifstream in("Config.json");
 
-set up the window from config
+nlohmann::json config;
 
-set up a 2D array for making the screen into a grid
+if (in.good()) {
+    in >> config;
+}
+else {
+    return -1;
+}
 
-set up a basic scene, think some shit like pac man
-
-test using chat gpt API for idk, something small
-
+std::srand(static_cast<unsigned int>(std::time(nullptr)));
 */
 
 int main() {
 
-    std::ifstream in("Config.json");
-
-    nlohmann::json config;
-
-    if (in.good()) {
-        in >> config;
-    }
-    else {
-        return -1;
+    if (!SDL_InitSubSystem(SDL_Init(SDL_INIT_VIDEO))) {
+        MessageBox(NULL, L"Big bad init fail", L"error", MB_OK | MB_ICONERROR);
     }
 
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    auto window = SDL_CreateWindow("PEPEGA GAME", 800, 600, SDL_WINDOW_RESIZABLE);
 
-    Game lolw123(config);
-    lolw123.Init();
-    lolw123.Run();
+    if (!window) {
+        MessageBox(NULL, L"WINDOW FAILED", L"error", MB_OK | MB_ICONERROR);
+
+    }
+
+    bool test_run = true;
+
+    while (test_run) {
+
+        SDL_Event event;
+
+        SDL_PollEvent(&event);
+
+        if (event.type == SDL_EventType::SDL_EVENT_QUIT) {
+            test_run = false;
+        }
+
+    }
+
+
+    SDL_Quit();
 
     return 0;
 }

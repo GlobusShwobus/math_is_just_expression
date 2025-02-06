@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-
+/*
 void EntityManager::InitLocalConfig(const nlohmann::json& config) {
 	try {
 		auto& sh = config["Entities"];
@@ -183,3 +183,4 @@ bool EntityManager::PosIsFree(vec2& pos)const {
 		}
 	}
 }
+*/

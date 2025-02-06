@@ -1,11 +1,10 @@
 #pragma once
 
 #include "Components.h"
-#include <SFML/Graphics.hpp>
-
 #include "json.hpp"
 #include <set>
 
+/*
 enum class EntityType {
 	player, enemy, bullet, obstacle, stickybomb, stickyAttached, NULLTYPE
 };
@@ -197,3 +196,5 @@ public:
 
 	}
 };
+
+*/

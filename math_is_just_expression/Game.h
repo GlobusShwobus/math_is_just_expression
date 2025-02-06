@@ -3,6 +3,10 @@
 #include "Entity.h"
 #include <random>
 
+#include <Windows.h>
+#include <SDL3/SDL.h>
+
+/*
 class Game {
 
 	sf::RenderWindow window;
@@ -145,7 +149,7 @@ public:
 				case sf::Keyboard::A: player.input.left  = true; break;
 				case sf::Keyboard::S: player.input.down  = true; break;
 				case sf::Keyboard::D: player.input.right = true; break;
-				default: /*jack shit i think???*/ break;
+				default:  break;
 				}
 			}
 			if (sfevent.type == sf::Event::KeyReleased) {
@@ -154,7 +158,7 @@ public:
 				case sf::Keyboard::A: player.input.left  = false; break;
 				case sf::Keyboard::S: player.input.down = false; break;
 				case sf::Keyboard::D: player.input.right = false; break;
-				default: /*jack shit i think???*/ break;
+				default:  break;
 				}
 			}
 			static bool hold_test = false;
@@ -292,3 +296,5 @@ public:
 
 	}
 };
+
+*/
