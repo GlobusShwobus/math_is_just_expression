@@ -1,10 +1,18 @@
 #pragma once
 
+#define PI 3.14159265
+#define NOMINMAX
+
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_image.h>
+#include <Windows.h>
+#include <exception>
+#include <random>
 #include <cmath>
+#include "json.hpp"
 #include <algorithm>
 
-
-#define PI 3.14159265
 
 class vec2 {
 public:

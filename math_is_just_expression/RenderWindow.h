@@ -1,10 +1,26 @@
 #pragma once
 
 #include "Entity.h"
-#include <random>
 
-#include <Windows.h>
-#include <SDL3/SDL.h>
+class RenderWindow {
+
+	SDL_Window* window = nullptr;
+	SDL_Renderer* renderer = nullptr;
+
+public:
+
+	RenderWindow(const char* title, int width, int height);
+	
+	bool Good()const {
+		return window && renderer;
+	}
+
+	~RenderWindow() {
+		SDL_DestroyRenderer(renderer);
+		SDL_DestroyWindow(window);
+	}
+};
+
 
 /*
 class Game {
