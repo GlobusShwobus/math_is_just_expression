@@ -9,3 +9,17 @@ RenderWindow::RenderWindow(const char* title, int width, int height) {
 	}
 
 }
+
+SDL_Texture* RenderWindow::LoadTexture(const char* filepath) {
+	SDL_Texture* texture = nullptr;
+
+	texture = IMG_LoadTexture(renderer, filepath);
+
+	//check somewhere else
+	//if (!texture) {
+	//	std::string err = "Failed to load texture: " + std::string(filepath);
+	//	throw std::exception(err.c_str());
+	//}
+
+	return texture;
+}
